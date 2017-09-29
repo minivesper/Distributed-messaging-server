@@ -1,4 +1,7 @@
 import socket
+import getpass
+import inquirer
+from pprint import pprint
 
 class Client:
     def __init__(self,TCP_IP,TCP_PORT,BUFFER_SIZE):
@@ -31,6 +34,25 @@ class Client:
             inp = input("enter Command: ")
             self.handleCommand(inp)
 
+    def inputCredentials(self):
+        user = input("Username:")
+        passwd = getpass.getpass("Password for " + user + ":")
+        self.handleCommand(user)
+        self.handleCommand(passwd)
+
+    def get_answer(self, answers):
+        return str(answers)
+
+    def chooseMessage(self):
+        questions = [inquirer.List('type',message="What do you want to do?",
+                choices=['Check Messages', 'Send Message', 'Quit'],),]
+        answers = inquirer.prompt(questions)
+        pprint(response)
+        response = get_answer(answers)
+        self.handleCommand(response)
+
+
+
 # TCP_IP = '127.0.0.1'
 # TCP_PORT = 5005
 # BUFFER_SIZE = 1024
@@ -38,4 +60,6 @@ class Client:
 
 if __name__ == "__main__":
     c = Client('127.0.0.1',5005,1024)
+    c.inputCredentials()
+    c.chooseMessage()
     c.run()
