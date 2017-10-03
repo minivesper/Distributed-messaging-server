@@ -10,7 +10,7 @@ class Requests:
         s.connect((self.TCP_IP, self.TCP_PORT))
 
 class SMSG:
-    def __init__(self, Usermane, Recipient, Message):
+    def __init__(self, Username, Recipient, Message):
         self.Username = Username
         self.Recipient = Recipient
         self.Message = Message
@@ -24,4 +24,11 @@ class SMSG:
     def getMessage(self):
         return self.Message
 
-    def 
+    def __repr__(self):
+        return("%s %s %s"%(self.Username,self.Recipient,self.Message))
+
+class CMSG:
+    def __init__(self, Username):
+    self.Username = Username
+
+    

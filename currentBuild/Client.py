@@ -1,6 +1,7 @@
 import socket
 import getpass
 import inquirer
+from Requests import *
 from pprint import pprint
 
 class Client:
@@ -39,18 +40,30 @@ class Client:
         passwd = getpass.getpass("Password for " + user + ":")
         self.handleCommand(user)
         self.handleCommand(passwd)
+        return user,passwd
 
-    def get_answer(self, answers):
-        return str(answers)
+    def handleRequest(self):
 
-    def chooseMessage(self):
-        questions = [inquirer.List('type',message="What do you want to do?",
-                choices=['Check Messages', 'Send Message', 'Quit'],),]
-        answers = inquirer.prompt(questions)
-        pprint(response)
-        response = get_answer(answers)
-        self.handleCommand(response)
-
+    def chooseMessage(self, user):
+        amswers={}
+        while answers != 'Quit':
+            questions = [inquirer.List('type',message="What do you want to do?",
+                    choices=['Check Messages', 'Send Message', 'Quit'],),]
+            answers = inquirer.prompt(questions)
+            if answers["type"] == 'Send Message':
+                who = input("who do you send to ")
+                what = input("what you send ")
+                sm = SMSG(user,who,what)
+                self.handleCommand(str(sm))
+            if answers["type"]=='Check Messages':
+                cm =CMSG(user)
+                #need to create function that deals with if user is going to request all messages from all recipients at once? & how the server will handle it
+            if answers["type"]=='Quit':
+                s = getSocket()
+                s.close()
+            #pprint(response)
+            #response = get_answer(answers)
+            #self.handleCommand(response)
 
 
 # TCP_IP = '127.0.0.1'
@@ -60,6 +73,6 @@ class Client:
 
 if __name__ == "__main__":
     c = Client('127.0.0.1',5005,1024)
-    c.inputCredentials()
-    c.chooseMessage()
+    user, passwd = c.inputCredentials()
+    c.chooseMessage(user)
     c.run()
