@@ -32,34 +32,30 @@ class Client:
 
     def run(self):
         while True:
-            inp = input("enter Command: ")
+            inp = raw_input("enter Command: ")
             self.handleCommand(inp)
 
     def inputCredentials(self):
-        user = input("Username:")
+        user = raw_input("Username: ")
         passwd = getpass.getpass("Password for " + user + ":")
-        self.handleCommand(user)
-        self.handleCommand(passwd)
         return user,passwd
 
-    def handleRequest(self):
-
     def chooseMessage(self, user):
-        amswers={}
+        answers={}
         while answers != 'Quit':
             questions = [inquirer.List('type',message="What do you want to do?",
                     choices=['Check Messages', 'Send Message', 'Quit'],),]
             answers = inquirer.prompt(questions)
             if answers["type"] == 'Send Message':
-                who = input("who do you send to ")
-                what = input("what you send ")
+                who = raw_input("who do you send to ")
+                what = raw_input("what you send ")
                 sm = SMSG(user,who,what)
                 self.handleCommand(str(sm))
             if answers["type"]=='Check Messages':
                 cm =CMSG(user)
                 #need to create function that deals with if user is going to request all messages from all recipients at once? & how the server will handle it
             if answers["type"]=='Quit':
-                s = getSocket()
+                #s = getSocket()
                 s.close()
             #pprint(response)
             #response = get_answer(answers)

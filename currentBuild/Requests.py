@@ -28,7 +28,8 @@ class SMSG:
         return("%s %s %s"%(self.Username,self.Recipient,self.Message))
 
 class CMSG:
+
     def __init__(self, Username):
-    self.Username = Username
+    	self.Username = Username
 
     
