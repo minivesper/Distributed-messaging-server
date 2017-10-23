@@ -1,6 +1,6 @@
 import socket
 import getpass
-import inquirer
+# import inquirer
 from Requests import *
 from pprint import pprint
 
@@ -40,24 +40,24 @@ class Client:
         passwd = getpass.getpass("Password for " + user + ":")
         return user,passwd
 
-    def chooseMessage(self, user):
-        answers={}
-        while answers != 'Quit':
-            questions = [inquirer.List('type',message="What do you want to do?",
-                    choices=['Check Messages', 'Send Message', 'Quit'],),]
-            answers = inquirer.prompt(questions)
-            if answers["type"] == 'Send Message':
-                who = input("who do you send to ")
-                what = input("what you send ")
-                sm = SMSG(user,who,what)
-                self.handleCommand(str(sm))
-            if answers["type"]=='Check Messages':
-                cm =CMSG(user)
-                #need to create function that deals with if user is going to request all messages from all recipients at once? & how the server will handle it
-            if answers["type"]=='Quit':
-                #s = getSocket()
-                s.close()
-            #pprint(response)
+    # def chooseMessage(self, user):
+        # answers={}
+        # while answers != 'Quit':
+        #     questions = [inquirer.List('type',message="What do you want to do?",
+        #             choices=['Check Messages', 'Send Message', 'Quit'],),]
+        #     answers = inquirer.prompt(questions)
+        #     if answers["type"] == 'Send Message':
+        #         who = input("who do you send to ")
+        #         what = input("what you send ")
+        #         sm = SMSG(user,who,what)
+        #         self.handleCommand(str(sm))
+        #     if answers["type"]=='Check Messages':
+        #         cm =CMSG(user)
+        #         #need to create function that deals with if user is going to request all messages from all recipients at once? & how the server will handle it
+        #     if answers["type"]=='Quit':
+        #         #s = getSocket()
+        #         s.close()
+        #     #pprint(response)
             #response = get_answer(answers)
             #self.handleCommand(response)
 
@@ -70,5 +70,5 @@ class Client:
 if __name__ == "__main__":
     c = Client('127.0.0.1',5005,1024)
     user, passwd = c.inputCredentials()
-    c.chooseMessage(user)
+    # c.chooseMessage(user)
     c.run()

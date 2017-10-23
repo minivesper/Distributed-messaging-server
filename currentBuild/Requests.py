@@ -1,6 +1,6 @@
 import socket
 import getpass
-import inquirer
+# import inquirer
 from pprint import pprint
 
 class Requests:
@@ -14,6 +14,10 @@ class SMSG:
         self.Username = Username
         self.Recipient = Recipient
         self.Message = Message
+
+    def encode(self):
+        sendStr = "SMSG"
+
 
     def getUsername(self):
         return self.Username
@@ -31,5 +35,3 @@ class CMSG:
 
     def __init__(self, Username):
     	self.Username = Username
-
-    
