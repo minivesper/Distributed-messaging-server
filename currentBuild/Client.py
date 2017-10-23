@@ -32,11 +32,11 @@ class Client:
 
     def run(self):
         while True:
-            inp = raw_input("enter Command: ")
+            inp = input("enter Command: ")
             self.handleCommand(inp)
 
     def inputCredentials(self):
-        user = raw_input("Username: ")
+        user = input("Username: ")
         passwd = getpass.getpass("Password for " + user + ":")
         return user,passwd
 
@@ -47,8 +47,8 @@ class Client:
                     choices=['Check Messages', 'Send Message', 'Quit'],),]
             answers = inquirer.prompt(questions)
             if answers["type"] == 'Send Message':
-                who = raw_input("who do you send to ")
-                what = raw_input("what you send ")
+                who = input("who do you send to ")
+                what = input("what you send ")
                 sm = SMSG(user,who,what)
                 self.handleCommand(str(sm))
             if answers["type"]=='Check Messages':
