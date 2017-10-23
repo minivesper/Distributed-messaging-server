@@ -25,20 +25,34 @@ class Client:
     def getSocket(self):
         return self.socket
 
-    def handleCommand(self, inp_str):
-        self.getSocket().sendto(inp_str.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+    def handleCommand(self, inp_str, username):
+        req = ""
+        if(inp_str == "SMSG"):
+            sendTo = input("who send to: ")
+            msgtxt = input(" what send: ")
+            req = SMSG(username, sendTo, msgtxt)
+            req = req.encode()
+        elif(inp_str == "CMSG"):
+            req = CMSG(username)
+            req = req.encode()
+        self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
         print(data.decode())
 
-    def run(self):
+    def run(self, currentUsername):
         while True:
             inp = input("enter Command: ")
-            self.handleCommand(inp)
+            self.handleCommand(inp, currentUsername)
 
     def inputCredentials(self):
         user = input("Username: ")
         passwd = getpass.getpass("Password for " + user + ":")
-        return user,passwd
+        lreq = LOGN(user,passwd)
+        lreq = lreq.encode()
+        self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+        data = self.getSocket().recv(self.getBUFFER_SIZE())
+        print(data.decode())
+        return user
 
     # def chooseMessage(self, user):
         # answers={}
@@ -69,6 +83,6 @@ class Client:
 
 if __name__ == "__main__":
     c = Client('127.0.0.1',5005,1024)
-    user, passwd = c.inputCredentials()
+    user = c.inputCredentials()
     # c.chooseMessage(user)
-    c.run()
+    c.run(user)

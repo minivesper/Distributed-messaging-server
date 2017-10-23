@@ -88,3 +88,16 @@ class CMSG:
 
     def __init__(self, Username):
     	self.Username = Username
+
+    def getUsername(self):
+        return self.Username
+
+    def encode(self):
+        return "CMSG" + str(len(self.getUsername())) + "|" + self.getUsername()
+
+    def decode(self,stream):
+        stream.split("|")
+        self.Username = stream[1]
+
+    def __repr__(self):
+        return("CMSG: %s"%(self.getUsername()))
