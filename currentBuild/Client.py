@@ -63,7 +63,6 @@ class Client:
         elif(inp_str == "CMSG"):
             req = CMSG(username)
             req = req.encode()
-<<<<<<< HEAD
         elif(inp_str == "quit"):
             self.getSocket().close()
             sys.exit(1)
@@ -73,17 +72,6 @@ class Client:
             print(data.decode())
         else:
             print("%s is not a valid request type"%(inp_str))
-=======
-            print("got here")
-        else:
-            req.encode()
-            self.run(username)
-        self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
-        # s = self.getSocket()
-        # data = recvall(s)
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        print(data.decode())
->>>>>>> 6639ea1ba843a4242cb3f3300ce73d81a8a9ca3d
 
     def recvall(self, sock):
         data=""
