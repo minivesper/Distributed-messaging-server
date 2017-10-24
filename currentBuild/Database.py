@@ -10,7 +10,7 @@ class Database:
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username && lparts[1] == passwd):
+                    if(lparts[0] == username and lparts[1][:-1] == passwd):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
                 print("could not write to file %s"%(e))
@@ -20,7 +20,7 @@ class Database:
         except (IOError, OSError) as e:
             print("could not open file %s"%(e))
             return(False, 2)
-        return(True,0)
+        return(found,0)
 
     def write(self,fname, writeText):
         try:
@@ -44,7 +44,7 @@ class Database:
            try:
                for line in f:
                    lparts = line.split(",")
-                   if(lparts[0] == username):
+                   if(lparts[1] == username):
                        messages.append(line)
            except EXPECTED_EXCEPTION_TYPES as e:
                print("could not read from file %s"%(e))

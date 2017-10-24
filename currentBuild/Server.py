@@ -2,6 +2,7 @@ import socket
 import sys
 import select
 from Requests import *
+from Database import *
 
 class Server:
 
@@ -10,8 +11,10 @@ class Server:
         self.TCP_IP = TCP_IP
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
+        self.db = Database()
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket = s
         except socket.error as msg:
             s = None
@@ -38,42 +41,41 @@ class Server:
     def getSocket(self):
         return self.socket
 
-    def daveshandleReq(self, data):
+    def handleReq(self, data):
         data = data.decode()
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            user = lg.Username
-            pw = lg.passwd
-            #pass these into database.verify
-            #if(verified)
-            ret = ("User " + user + " logged in successfully.")
-            #else
-            #print("That username and password combination is invalid")
+            ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass())
+            if(ver):
+                ret = (" logged in successfully.")
+            else:
+                ret = ("not verified")
             return(ret)
-        if(data[0:4] == "CMSG"):
+
+        elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
             cm.decode(data)
-            user = cm.Username
+            messages = []
+            messages, error = self.db.read("./data/messages.txt", str(cm))
+            if error == 0:
+                ret = "messages read"
+            elif error == 1:
+                ret = "could not read messages"
+            elif error == 2:
+                ret = "could not open file"
+            print(messages)
             #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
             #parse through the database txt and return all messages with matching recipiant
-            ret = ("Looking for messages adressed to" + user + ".")
             return(ret)
 
-    def handleReq(self, data):
-        data = data.decode()
-        print(data, "request recieved")
-        ret = "you requested: "
-        ret += data
-        return(ret)
-
-    def handleSMSG(self, data):
-        data = data.decode()
-        if data[0:4]=="SMSG":
+        elif data[0:4]=="SMSG":
             #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
-            sendmesobj = sobj.decode(data)
-            error = db.write("filename", str(sendmesobj))
+            print(data)
+            sobj.decode(data)
+            print(sobj)
+            error = self.db.write("./data/messages.txt", str(sobj))
             if error == 0:
                 ret = "Message sent successfully"
             elif error == 1:
@@ -82,6 +84,12 @@ class Server:
                 ret = "File does not exist"
         return(ret)
 
+    def handleReq2(self, data):
+        data = data.decode()
+        print(data, "request recieved")
+        ret = "you requested: "
+        ret += data
+        return(ret)
 
     def run(self):
         print("listening...")

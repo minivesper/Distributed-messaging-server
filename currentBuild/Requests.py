@@ -59,9 +59,11 @@ class SMSG:
 
     def decode(self, parseStr):
         parselist = parseStr.split("|")
+        print(parselist)
         self.Username = parselist[2]
         self.Recipient = parselist[4]
         self.Message = parselist[6]
+
 
     def getUsername(self):
         return self.Username
