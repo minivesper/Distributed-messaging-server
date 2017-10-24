@@ -1,6 +1,7 @@
 import socket
 import sys
 import select
+from Requests import *
 
 class Server:
 
@@ -43,6 +44,22 @@ class Server:
         ret = "you requested: "
         ret += data
         return(ret)
+
+    def handleSMSG(self, data):
+        data = data.decode()
+        if data[0:4]=="SMSG":
+            #create an empty SMSG object to use our decode function to fill in fields
+            sobj = SMSG(None, None, None)
+            sendmesobj = sobj.decode(data)
+            error = db.write("filename", str(sendmesobj))
+            if error == 0:
+                ret = "Message sent successfully"
+            elif error == 1:
+                ret = "Error in sending message"
+            elif error == 2:
+                ret = "File does not exist"
+        return(ret)
+
 
     def run(self):
         print("listening...")
