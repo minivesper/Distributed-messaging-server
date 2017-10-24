@@ -93,18 +93,30 @@ class Server:
 
     def run(self):
         print("listening...")
-        conn, addr = self.getSocket().accept()
+        connected_clients = []
+        while True:
+            attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
-        print('Connection address:', addr)
-        while 1:
-          #stores the data sent by the connection socket. max size of data is BUFFER_SIZE
-          data = conn.recv(self.getBUFFER_SIZE())
-          if data:
-              ret_data = self.handleReq(data)
-          else:
-              break
-          #Sends identical data back to connected client.
-          conn.send(ret_data.encode())
+            for connections in attempts_to_connect:
+                conn, addr = self.getSocket().accept()
+                connected_clients.append(conn)
+                print('Connection address:', addr)
+
+            clients_allowed = []
+            try:
+                clients_allowed, wlist, xlist = select.select(connected_clients,[], [], 0.05)
+            except select.error:
+                pass
+
+            else:
+                for conn in connected_clients:
+                    data = conn.recv(self.getBUFFER_SIZE())
+                    if data:
+                        ret_data = self.handleReq(data)
+                        conn.send(ret_data.encode())
+                    else:
+                        print(conn.getsockname(), "disconnected")
+                        connected_clients.remove(conn)
 
 if __name__ == "__main__":
     s = Server('127.0.0.1',5005,1024)
