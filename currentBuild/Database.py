@@ -45,7 +45,7 @@ class Database:
                for line in f:
                    lparts = line.split(",")
                    if(lparts[1] == username):
-                       messages.append(line)
+                       messages.append(line[:-1])
            except EXPECTED_EXCEPTION_TYPES as e:
                print("could not read from file %s"%(e))
                return None, 1

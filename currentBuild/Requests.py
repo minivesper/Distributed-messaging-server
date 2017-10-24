@@ -89,8 +89,8 @@ class CMSG:
         return "CMSG" + str(len(self.getUsername())) + "|" + self.getUsername()
 
     def decode(self,stream):
-        stream.split("|")
-        self.Username = stream[1]
+        spstr = stream.split("|")
+        self.Username = spstr[1]
 
     def __repr__(self):
         return("%s"%(self.getUsername()))
