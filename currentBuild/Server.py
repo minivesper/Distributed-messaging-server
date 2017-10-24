@@ -38,6 +38,28 @@ class Server:
     def getSocket(self):
         return self.socket
 
+    def daveshandleReq(self, data):
+        data = data.decode()
+        if(data[0:4] == "LOGN"):
+            lg = LOGN(None, None)
+            lg.decode(data)
+            user = lg.Username
+            pw = lg.passwd
+            #pass these into database.verify
+            #if(verified)
+            ret = ("User " + user + " logged in successfully.")
+            #else
+            #print("That username and password combination is invalid")
+            return(ret)
+        if(data[0:4] == "CMSG"):
+            cm = CMSG(None)
+            cm.decode(data)
+            user = cm.Username
+            #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
+            #parse through the database txt and return all messages with matching recipiant
+            ret = ("Looking for messages adressed to" + user + ".")
+            return(ret)
+
     def handleReq(self, data):
         data = data.decode()
         print(data, "request recieved")
@@ -75,10 +97,6 @@ class Server:
               break
           #Sends identical data back to connected client.
           conn.send(ret_data.encode())
-
-# TCP_IP = '127.0.0.1'
-# TCP_PORT = 5005
-# BUFFER_SIZE = 20  # Normally 1024, but we want fast response
 
 if __name__ == "__main__":
     s = Server('127.0.0.1',5005,1024)

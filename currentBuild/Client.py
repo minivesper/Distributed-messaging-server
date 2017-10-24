@@ -122,14 +122,8 @@ class Client:
             #response = get_answer(answers)
             #self.handleCommand(response)
 
-
-# TCP_IP = '127.0.0.1'
-# TCP_PORT = 5005
-# BUFFER_SIZE = 1024
-# MESSAGE = "Hello World!"
-
 if __name__ == "__main__":
-    c = Client('127.0.0.1',5005,20)
+    c = Client('127.0.0.1',5005,1024)
     user = c.inputCredentials()
     # c.chooseMessage(user)
     c.run(user)
