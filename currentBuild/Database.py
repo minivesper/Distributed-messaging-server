@@ -3,6 +3,25 @@ class Database:
     def __init__(self):
          return
 
+    def verify(self, fname, username, passwd):
+        found = False
+        try:
+            f = open(fname, 'r')
+            try:
+                for line in f:
+                    lparts = line.split(",")
+                    if(lparts[0] == username && lparts[1] == passwd):
+                        found = True
+            except EXPECTED_EXCEPTION_TYPES as e:
+                print("could not write to file %s"%(e))
+                return(False, 1)
+            finally:
+                f.close()
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(False, 2)
+        return(True,0)
+
     def write(self,fname, writeText):
         try:
             f = open(fname, 'a')
@@ -25,7 +44,7 @@ class Database:
            try:
                for line in f:
                    lparts = line.split(",")
-                   if(lparts[4] == username):
+                   if(lparts[0] == username):
                        messages.append(line)
            except EXPECTED_EXCEPTION_TYPES as e:
                print("could not read from file %s"%(e))
@@ -35,4 +54,4 @@ class Database:
         except (IOError, OSError) as e:
            print("could not open file %s"%(e))
            return None, 2
-        return messages,0
+        return messages, 0
