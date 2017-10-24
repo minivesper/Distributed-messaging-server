@@ -1,4 +1,5 @@
 import socket
+import sys
 import getpass
 # import inquirer
 from Requests import *
@@ -9,9 +10,35 @@ class Client:
         self.TCP_IP = TCP_IP
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket = s
-        s.connect((self.TCP_IP, self.TCP_PORT))
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print("Socket created successfully")
+            self.socket = s
+        except socket.error as msg:
+            print("Error creating socket: %s" %msg)
+            sys.exit(1)
+        try:
+            s.connect((self.TCP_IP, self.TCP_PORT))
+            print("Socket connection valid")
+        except socket.error as msg:
+            print("Connection Error %s" %msg)
+            sys.exit(1)
+
+    # def createSocket(self):
+    #     try:
+    #         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #         print("Socket created successfully")
+    #     except socket.error, msg:
+    #         print("Error creating socket: %s" %msg)
+
+    # def connectsock(self):
+    #     try:
+    #         self.getSocket().connect(self.getTCP_PORT, self.getTCP_PORT)
+    #         print("Socket connection valid")
+    #         return self.socket
+    #     except socket.error as msg:
+    #         print("Connection Error %s" %msg)
+    #         sys.exit(1)
 
     def getTCP_IP(self):
         return self.TCP_IP
@@ -29,19 +56,36 @@ class Client:
         req = ""
         if(inp_str == "SMSG"):
             sendTo = input("who send to: ")
-            msgtxt = input(" what send: ")
+            msgtxt = input("what send: ")
             req = SMSG(username, sendTo, msgtxt)
             req = req.encode()
         elif(inp_str == "CMSG"):
             req = CMSG(username)
             req = req.encode()
+            print("got here")
+        else:
+            req.encode()
+            self.run(username)
         self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+        # s = self.getSocket()
+        # data = recvall(s)
         data = self.getSocket().recv(self.getBUFFER_SIZE())
         print(data.decode())
 
+    def recvall(self, sock):
+        data=""
+        data.encode('utf-8')
+        while True:
+            part = sock.recv(self.getBUFFER_SIZE())
+            print("%s"% part)
+            data += part
+            if part < self.getBUFFER_SIZE():
+                break
+        return data
+
     def run(self, currentUsername):
         while True:
-            inp = input("enter Command: ")
+            inp = input("enter Command: ").upper()
             self.handleCommand(inp, currentUsername)
 
     def inputCredentials(self):
@@ -51,6 +95,8 @@ class Client:
         lreq = lreq.encode()
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
+        # s = self.getSocket()
+        # data = self.recvall(s)
         print(data.decode())
         return user
 
@@ -82,7 +128,7 @@ class Client:
 # MESSAGE = "Hello World!"
 
 if __name__ == "__main__":
-    c = Client('127.0.0.1',5005,1024)
+    c = Client('127.0.0.1',5005,20)
     user = c.inputCredentials()
     # c.chooseMessage(user)
     c.run(user)
