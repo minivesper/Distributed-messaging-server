@@ -1,14 +1,29 @@
 import socket
+import sys
+import select
 
 class Server:
 
     def __init__(self,TCP_IP,TCP_PORT,BUFFER_SIZE):
+        HOST = None
         self.TCP_IP = TCP_IP
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket = s
-        s.bind((self.TCP_IP, self.TCP_PORT))
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = s
+        except socket.error as msg:
+            s = None
+            self.socket = None
+            print("could not create socket %s"%(msg))
+        try:
+            s.bind((self.TCP_IP, self.TCP_PORT))
+            self.socket.listen(1)
+        except socket.error as msg:
+            s.close()
+            s = None
+            self.socket = None
+            print("could not bind or listen %s"%(msg))
 
     def getTCP_IP(self):
         return self.TCP_IP
@@ -30,9 +45,9 @@ class Server:
         return(ret)
 
     def run(self):
-        self.getSocket().listen(1)
         print("listening...")
         conn, addr = self.getSocket().accept()
+
         print('Connection address:', addr)
         while 1:
           #stores the data sent by the connection socket. max size of data is BUFFER_SIZE
@@ -49,5 +64,5 @@ class Server:
 # BUFFER_SIZE = 20  # Normally 1024, but we want fast response
 
 if __name__ == "__main__":
-    s = Server('127.0.0.1',5005,20)
+    s = Server('127.0.0.1',5005,1024)
     s.run()

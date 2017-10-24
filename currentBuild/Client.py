@@ -1,5 +1,6 @@
 import socket
 import getpass
+import sys
 # import inquirer
 from Requests import *
 from pprint import pprint
@@ -35,9 +36,15 @@ class Client:
         elif(inp_str == "CMSG"):
             req = CMSG(username)
             req = req.encode()
-        self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        print(data.decode())
+        elif(inp_str == "quit"):
+            self.getSocket().close()
+            sys.exit(1)
+        if(req != ""):
+            self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+            data = self.getSocket().recv(self.getBUFFER_SIZE())
+            print(data.decode())
+        else:
+            print("%s is not a valid request type"%(inp_str))
 
     def run(self, currentUsername):
         while True:
