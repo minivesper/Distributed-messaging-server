@@ -3,12 +3,6 @@ import getpass
 # import inquirer
 from pprint import pprint
 
-# class Requests:
-#     def __init__():
-#         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         self.socket = s
-#         s.connect((self.TCP_IP, self.TCP_PORT))
-
 class LOGN:
     def __init__(self,Username,passwd):
         self.Username = Username
@@ -31,7 +25,7 @@ class LOGN:
         self.passwd = s[3]
 
     def __repr__(self):
-        return("LOGN: %s %s"%(self.getUsername(), self.getPass()))
+        return("%s,%s"%(self.getUsername(), self.getPass()))
 
     # def decode(self, stream):
     #     userlen = ""
@@ -69,9 +63,6 @@ class SMSG:
         self.Recipient = parselist[4]
         self.Message = parselist[6]
 
-    def __repr__(self):
-        return("SMSG: %s %s %s"%(self.getUsername(),self.getRecipient(),self.getMessage()))
-
     def getUsername(self):
         return self.Username
 
@@ -82,7 +73,7 @@ class SMSG:
         return self.Message
 
     def __repr__(self):
-        return("%s %s %s"%(self.Username,self.Recipient,self.Message))
+        return("%s,%s,%s"%(self.Username,self.Recipient,self.Message))
 
 class CMSG:
 
@@ -100,4 +91,4 @@ class CMSG:
         self.Username = stream[1]
 
     def __repr__(self):
-        return("CMSG: %s"%(self.getUsername()))
+        return("%s"%(self.getUsername()))
