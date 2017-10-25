@@ -109,7 +109,7 @@ class Server:
                 pass
 
             else:
-                for conn in connected_clients:
+                for conn in clients_allowed:
                     data = conn.recv(self.getBUFFER_SIZE())
                     if data:
                         ret_data = self.handleReq(data)
