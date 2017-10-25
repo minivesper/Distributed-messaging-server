@@ -103,6 +103,7 @@ class Client:
         print(data.decode())
         return user
 
+    #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
         # answers={}
         # while answers != 'Quit':
