@@ -89,6 +89,8 @@ class Client:
             inp = input("enter Command: ").upper()
             self.handleCommand(inp, currentUsername)
 
+
+
     def inputCredentials(self):
         user = input("Username: ")
         passwd = getpass.getpass("Password for " + user + ":")
