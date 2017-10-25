@@ -58,13 +58,14 @@ class Server:
             cm.decode(data)
             messages = []
             messages, error = self.db.read("./data/messages.txt", str(cm))
+            rm = RMSG(None, None)
+            a = rm.encode(messages)
             if error == 0:
-                ret = "messages read"
+                ret = a
             elif error == 1:
                 ret = "could not read messages"
             elif error == 2:
                 ret = "could not open file"
-            print(messages)
             #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
             #parse through the database txt and return all messages with matching recipiant
             return(ret)
@@ -72,9 +73,7 @@ class Server:
         elif data[0:4]=="SMSG":
             #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
-            print(data)
             sobj.decode(data)
-            print(sobj)
             error = self.db.write("./data/messages.txt", str(sobj))
             if error == 0:
                 ret = "Message sent successfully"
