@@ -1,0 +1,8 @@
+SMSG request format:
+SMSG|<int length of sender>|<string sender>|<int length of recipient>|<string recipient>|<int length of msgtxt>|<string msgtxt>
+
+LOGN request format:
+LOGN|<int length of username>|<string username>|<int length of pass>|<string pass>
+
+CMSG request format:
+CMSG|<int length of username>|<string username>
