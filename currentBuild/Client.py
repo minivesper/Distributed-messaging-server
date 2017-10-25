@@ -98,10 +98,15 @@ class Client:
         lreq = lreq.encode()
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
-        # s = self.getSocket()
-        # data = self.recvall(s)
-        print(data.decode())
-        return user
+        if(data.decode() == "not verified"):
+            print(data.decode())
+            user = None
+            return user
+        else:
+            # s = self.getSocket()
+            # data = self.recvall(s)
+            print(data.decode())
+            return user
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
@@ -126,7 +131,9 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-    c = Client('127.0.0.1',5005,1024)
-    user = c.inputCredentials()
-    # c.chooseMessage(user)
-    c.run(user)
+    while True:
+        c = Client('127.0.0.1',5005,1024)
+        user = c.inputCredentials()
+        if user:
+            c.run(user)
+        # c.chooseMessage(user)
