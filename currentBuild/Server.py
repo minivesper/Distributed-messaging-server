@@ -60,6 +60,7 @@ class Server:
             messages, error = self.db.read("./data/messages.txt", str(cm))
             rm = RMSG(None, None)
             a = rm.encode(messages)
+            print(a)
             if error == 0:
                 ret = a
             elif error == 1:
@@ -81,13 +82,6 @@ class Server:
                 ret = "Error in sending message"
             elif error == 2:
                 ret = "File does not exist"
-        return(ret)
-
-    def handleReq2(self, data):
-        data = data.decode()
-        print(data, "request recieved")
-        ret = "you requested: "
-        ret += data
         return(ret)
 
     def run(self):

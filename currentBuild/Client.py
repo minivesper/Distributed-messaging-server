@@ -53,6 +53,14 @@ class Client:
     def getSocket(self):
         return self.socket
 
+    def handleReturn(self, returnreq):
+        if(returnreq[0:4] == "RMSG"):
+            rm = RMSG(None,None)
+            rm.decode(returnreq)
+            print(rm)
+        else:
+            print(returnreq)
+
     def handleCommand(self, inp_str, username):
         req = ""
         if(inp_str == "SMSG"):
@@ -69,27 +77,25 @@ class Client:
         if(req != ""):
             self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
             data = self.getSocket().recv(self.getBUFFER_SIZE())
-            print(data.decode())
+            self.handleReturn(data.decode())
         else:
             print("%s is not a valid request type"%(inp_str))
 
-    def recvall(self, sock):
-        data=""
-        data.encode('utf-8')
-        while True:
-            part = sock.recv(self.getBUFFER_SIZE())
-            print("%s"% part)
-            data += part
-            if part < self.getBUFFER_SIZE():
-                break
-        return data
+    # def recvall(self, sock):
+    #     data=""
+    #     data.encode('utf-8')
+    #     while True:
+    #         part = sock.recv(self.getBUFFER_SIZE())
+    #         print("%s"% part)
+    #         data += part
+    #         if part < self.getBUFFER_SIZE():
+    #             break
+    #     return data
 
     def run(self, currentUsername):
         while True:
             inp = input("enter Command: ").upper()
             self.handleCommand(inp, currentUsername)
-
-
 
     def inputCredentials(self):
         user = input("Username: ")
@@ -136,4 +142,4 @@ if __name__ == "__main__":
             user = c.inputCredentials()
             if user:
                 c.run(user)
-# c.chooseMessage(user)
+                # c.chooseMessage(user)

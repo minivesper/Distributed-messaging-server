@@ -92,7 +92,7 @@ class RMSG:
 
     def encode(self, messages):
         lenall = str(len(messages))
-        sendstr = "RSMG|"
+        sendstr = "RMSG|"
         beg = sendstr + lenall
         for m in messages:
             sm = m.split(",")
@@ -102,19 +102,29 @@ class RMSG:
                 # RMSG,#messages for user, length of user who sent message, user, length of the user reciving message(we wanted to keep this so we can have clients send a message to multiple people), userrec, length of message, message
         return beg
 
-        # def decode(self, messages):
-        #     messages = messages.split(",")
-        #     lenarr = messages[1]
-        #     Matrix = [[0 for x in range(3)] for y in range(lenarr)]
-        #     for m in messages[3:-1]:
-        #     #need to talk about decoding the string from the server. We have the issue of parsing through and knowing when to stop because the
-        #
-        #
-        #     messages[]
-        #     for m in messages:
-        #         ms = m.split(",")
-        #         for m in ms
+    def decode(self, messages):
+        write_messages = []
+        single_message = []
+        messages = messages.split("|")
+        messages = messages[2:]
+        for i in range(len(messages)):
+            if i%6 == 3:
+                single_message.append(messages[i])
+            elif i%6 == 5:
+                single_message.append(messages[i])
+            elif i%6 == 1:
+                single_message.append(messages[i])
+            if(len(single_message) == 3):
+                write_messages.append(single_message)
+                single_message = []
+        self.messages = write_messages
 
+    def __repr__(self):
+        printstr = "\nHere are yo messages:\n"
+        for m in self.messages:
+            singlestr = "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
+            printstr += singlestr
+        return printstr
 
 class CMSG:
 
