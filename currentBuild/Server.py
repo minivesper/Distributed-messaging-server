@@ -57,7 +57,7 @@ class Server:
             cm = CMSG(None)
             cm.decode(data)
             messages = []
-            messages, error = self.db.read("./data/messages.txt", str(cm))
+            messages, error = self.db.read(str(cm))
             rm = RMSG(None, None)
             a = rm.encode(messages)
             if error == 0:
@@ -74,13 +74,15 @@ class Server:
             #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
             sobj.decode(data)
-            error = self.db.write("./data/messages.txt", str(sobj))
+            error = self.db.write(sobj.getRecipient(), str(sobj))
             if error == 0:
                 ret = "Message sent successfully"
             elif error == 1:
                 ret = "Error in sending message"
             elif error == 2:
                 ret = "File does not exist"
+            elif error == 3:
+                ret = "This users inbox is full"
         return(ret)
 
     def run(self):
