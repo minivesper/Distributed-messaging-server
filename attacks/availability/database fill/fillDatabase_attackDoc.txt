@@ -6,10 +6,10 @@ To expose this attack I wrote a malicious client that logs in normally, as in so
 and then had it loop forever sending SMSG requests. Each request write to the database, and this client sends about 100 requests a minute.
 These add up, and start to slow down any other user on the server.
 
-To replicate: start server, connect /attack/availability/database \fill/fill_database.py
+To replicate: start server, run /attack/availability/database \fill/fill_database.py
 login with legit user eg. (user=ele,pass=v)
 after the database reaches around 18,000 lines, slowdown will be significant.
 
+To solve this vulnerability, a new more complex database structure will be used.
 
-Patch/Mitigation - How to do we remove the vulnerability?
 Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?
