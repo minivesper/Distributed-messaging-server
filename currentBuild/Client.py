@@ -1,7 +1,6 @@
 import socket
 import sys
 import getpass
-import sys
 # import inquirer
 from Requests import *
 from pprint import pprint

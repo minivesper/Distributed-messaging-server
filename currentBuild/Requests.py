@@ -21,8 +21,8 @@ class LOGN:
 
     def decode(self, stream):
         s = stream.split("|")
-        self.Username = s[1]
-        self.passwd = s[3]
+        self.Username = s[2]
+        self.passwd = s[4]
 
     def __repr__(self):
         return("%s,%s"%(self.getUsername(), self.getPass()))
@@ -120,7 +120,7 @@ class RMSG:
         self.messages = write_messages
 
     def __repr__(self):
-        printstr = "\nHere are yo messages:\n"
+        printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
         for m in self.messages:
             singlestr = "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
             printstr += singlestr
@@ -139,7 +139,7 @@ class CMSG:
 
     def decode(self,stream):
         spstr = stream.split("|")
-        self.Username = spstr[1]
+        self.Username = spstr[2]
 
     def __repr__(self):
         return("%s"%(self.getUsername()))

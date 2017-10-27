@@ -60,7 +60,6 @@ class Server:
             messages, error = self.db.read("./data/messages.txt", str(cm))
             rm = RMSG(None, None)
             a = rm.encode(messages)
-            print(a)
             if error == 0:
                 ret = a
             elif error == 1:
