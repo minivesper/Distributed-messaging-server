@@ -60,8 +60,7 @@ class Database:
                with open(fname) as infile:
                    for line in infile:
                        lparts = line.split(",")
-                       if(lparts[1] == username):
-                           messages.append(line[:-1])
+                       messages.append(line[:-1])
            except IOError as e:
                print("could not read from file %s"%(e))
                return None, 1

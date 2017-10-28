@@ -1,4 +1,5 @@
-Vulnerable Git tag/branch
+Vulnerable tag: fillDatabase_vulnerable
+patched tag: fillDatabase_patched
 This attack causes a denial of service to any users attempting to receive messages from the server.
 The only thing outside of the normal that the malicious agent does is send a large amount of send messages.
 The entire database is housed in a single text file, and when that database gets large, we get significant slowdown in message processing.
