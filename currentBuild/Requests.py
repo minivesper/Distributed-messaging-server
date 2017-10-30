@@ -94,7 +94,6 @@ class RAPR:
                 write_messages.append(single_message)
                 single_message = []
         self.messages = write_messages
-<<<<<<< Updated upstream
 
     def __repr__(self):
         printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
@@ -184,97 +183,6 @@ class AAPR:
         self.admin = parselist[7]
 
     def __repr__(self):
-=======
-
-    def __repr__(self):
-        printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
-        for m in self.messages:
-            singlestr = "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
-            printstr += singlestr
-        return printstr
-
-
-# class CUSR:
-#     def __init__(self, username):
-#         self.username = username
-#
-#     def getUsername(self):
-#         return self.username
-
-class CACM:
-    def __init__(self, username, password, permission):
-        self.username = username
-        self.password = password
-        self.permission = permission
-        self.approval = approval
-
-    def getUsername(self):
-        return self.username
-
-    def getAppr(self):
-        return self.approval
-
-    def getPass(self):
-        return self.password
-
-    def getPermis(self):
-        return self.permission
-
-    def encode(self):
-        sendStr = "CACM|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis()) + "|" + str(self.getAppr())
-        return sendStr
-
-    def decode(self, parseStr):
-        parselist = parseStr.split("|")
-        print(parselist)
-        self.username = parselist[2]
-        self.password = parselist[4]
-        self.permission = parselist[5]
-        self.approval = parselist[6]
-
-    def __repr__(self):
-        return("%s,%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis(), self.getAppr()))
-
-class AAPR:
-    def __init__(self, username, password, permission,approval, admin):
-        self.username = username
-        self.password = password
-        self.permission = permission
-        self.approval = approval
-        self.admin = admin
-
-    def getUsername(self):
-        return self.username
-
-    def getPass(self):
-        return self.password
-
-    def getPermis(self):
-        return self.permission
-
-    def getAdmin(self):
-        return self.admin
-
-    def getAppr(self):
-        return self.approval
-
-    def encode(self):
-        sendStr = "AAPP|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis()) + "|" + str(self.getAppr()) + "|" + self.getAdmin()
-        return sendStr
-
-    def decode(self, parseStr):
-        parselist = parseStr.split("|")
-        print(parselist)
-        self.username = parselist[2]
-        self.password = parselist[4]
-        self.permission = parselist[5]
-        self.approval = parselist[6]
-        self.admin = parselist[7]
-
-    def __repr__(self):
->>>>>>> Stashed changes
         return("%s,%s,%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis(), self.getAppr(), self.getAdmin()))
 
     #may be a direction we go when we get rid of bars
