@@ -7,11 +7,7 @@ class LOGN:
     def __init__(self,username,passwd,permission):
         self.username = username
         self.passwd = passwd
-        self.permission = permission
-
-
-    def getPermis(self):
-        return self.permission
+        self.type = "LOGN"
 
     def getUsername(self):
         return self.username
@@ -210,6 +206,7 @@ class SMSG:
         self.Username = Username
         self.Recipient = Recipient
         self.Message = Message
+        self.type = "SMSG"
 
     def encode(self):
         sendStr = "SMSG"
@@ -239,7 +236,7 @@ class RMSG:
     def __init__(self, user_sendto, messages):
         self.user_sendto = user_sendto
         self.messages = messages
-
+        self.type = "RMSG"
     def getuser_sendto(self):
         return self.user_sendto
 
@@ -276,7 +273,7 @@ class RMSG:
         self.messages = write_messages
 
     def __repr__(self):
-        printstr = "\nHere are yo messages:\n"
+        printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
         for m in self.messages:
             singlestr = "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
             printstr += singlestr
@@ -285,7 +282,8 @@ class RMSG:
 class CMSG:
 
     def __init__(self, Username):
-    	self.Username = Username
+        self.Username = Username
+        self.type = "CMSG"
 
     def getUsername(self):
         return self.Username
@@ -295,7 +293,7 @@ class CMSG:
 
     def decode(self,stream):
         spstr = stream.split("|")
-        self.Username = spstr[1]
+        self.Username = spstr[2]
 
     def __repr__(self):
         return("%s"%(self.getUsername()))

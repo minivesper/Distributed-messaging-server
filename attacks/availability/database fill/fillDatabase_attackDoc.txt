@@ -1,0 +1,19 @@
+Vulnerable tag: fillDatabase_vulnerable
+patched tag: fillDatabase_patched
+This attack causes a denial of service to any users attempting to receive messages from the server.
+The only thing outside of the normal that the malicious agent does is send a large amount of send messages.
+The entire database is housed in a single text file, and when that database gets large, we get significant slowdown in message processing.
+To expose this attack I wrote a malicious client that logs in normally, as in someone who has a legit account on our server,
+and then had it loop forever sending SMSG requests. Each request write to the database, and this client sends about 100 requests a minute.
+These add up, and start to slow down any other user on the server.
+
+To replicate: start server, run /attack/availability/database \fill/fill_database.py
+login with legit user eg. (user=ele,pass=v)
+after the database reaches around 18,000 lines, slowdown will be significant.
+
+To solve this vulnerability, a new more complex database structure will be used.
+
+POST-PATCH: The database is now organized into a file for each user, with a cap of 1000000 bytes for a users file.
+a user can no longer slow down the server by continuously sending smsgs.
+
+Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?

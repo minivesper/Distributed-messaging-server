@@ -1,0 +1,7 @@
+Vulnerable Git tag/branch
+Risk - What might be lost by the owner (confidentiality/availability/integrity) or gained by the attacker
+Threat Model - What can the adversary (attacker) do?
+Vulnerability - What is the software defect that enables the attack?
+Exploit - Instructions/script to expose the vulnerability
+Patch/Mitigation - How to do we remove the vulnerability?
+Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?

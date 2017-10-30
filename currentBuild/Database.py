@@ -1,7 +1,18 @@
+import os
+import sys
+
 class Database:
 
     def __init__(self):
-         return
+        f = open("./data/logindata.txt","r")
+        for line in f:
+
+            #inits message files
+            lp = line.split(",")
+            fname = "./data/" + lp[0] + ".txt"
+            nf = open(fname, "a+")
+
+        return
 
     def verify(self, fname, username, passwd, permission):
         found = False
@@ -67,14 +78,19 @@ class Database:
 
     def write(self,fname, writeText):
         try:
+            fname = "./data/" + recipient + ".txt"
             f = open(fname, 'a')
-            try:
-                f.write(writeText + "\n")
-            except EXPECTED_EXCEPTION_TYPES as e:
-                print("could not write to file %s"%(e))
-                return(1)
-            finally:
-                f.close()
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    f.write(writeText + "\n")
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
         except (IOError, OSError) as e:
             print("could not open file %s"%(e))
             return(2)
@@ -124,14 +140,16 @@ class Database:
 
     def read(self,fname,username):
         messages = []
+        fname = "./data/" + username + ".txt"
         try:
            f = open(fname, 'r')
+           f.close()
            try:
-               for line in f:
-                   lparts = line.split(",")
-                   if(lparts[1] == username):
+               with open(fname) as infile:
+                   for line in infile:
+                       lparts = line.split(",")
                        messages.append(line[:-1])
-           except EXPECTED_EXCEPTION_TYPES as e:
+           except IOError as e:
                print("could not read from file %s"%(e))
                return None, 1
            finally:

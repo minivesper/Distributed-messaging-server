@@ -1,6 +1,7 @@
 import socket
 import sys
 import select
+from Session import *
 from Requests import *
 from Database import *
 
@@ -41,27 +42,16 @@ class Server:
     def getSocket(self):
         return self.socket
 
-    def handleReq(self, data):
+    def handleReq(self, data, session):
         data = data.decode()
+        ret = "no data"
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None, None)
             lg.decode(data)
-            print("lg", lg)
-            if(lg.getPermis() == "2"):
-                print("I am here")
-                ver, err = self.db.verify("./data/adminlogin.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
-                if(ver):
-                    ret = ("logged in successfully.")
-                else:
-                    ret = ("not verified")
-                return(ret)
-            elif(lg.getPermis()=="3"):
-                ver, err = self.db.verify("./data/masteradmin.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
-                if(ver):
-                    ret = (" logged in successfully.")
-                else:
-                    ret = ("not verified")
-                return(ret)
+            ver = session.loginAttempt(lg)
+            #ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass())
+            if(ver):
+                ret = (" logged in successfully.")
             else:
                 ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
                 if(ver):
@@ -121,45 +111,53 @@ class Server:
             if error == 0:
                 ret = a
             return(ret)
-
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
             cm.decode(data)
-            messages = []
-            messages, error = self.db.read("./data/messages.txt", str(cm))
-            rm = RMSG(None, None)
-            a = rm.encode(messages)
-            print(a)
-            if error == 0:
-                ret = a
-
+            if(session.check(cm)):
+                messages = []
+                messages, error = self.db.read(str(cm))
+                rm = RMSG(None, None)
+                a = rm.encode(messages)
+                if error == 0:
+                    ret = a
+                elif error == 1:
+                    ret = "could not read messages"
+                elif error == 2:
+                    ret = "could not open file"
             #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
             #parse through the database txt and return all messages with matching recipiant
             return(ret)
-
         elif data[0:4]=="SMSG":
             #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
             sobj.decode(data)
-            error = self.db.write("./data/messages.txt", str(sobj))
-            if error == 0:
-                ret = "Message sent successfully"
-            elif error == 1:
-                ret = "Error in sending message"
-            elif error == 2:
-                ret = "File does not exist"
-        return(ret)
+            if(session.check(sobj)):
+                error = self.db.write(sobj.getRecipient(), str(sobj))
+                if error == 0:
+                    ret = "Message sent successfully"
+                elif error == 1:
+                    ret = "Error in sending message"
+                elif error == 2:
+                    ret = "File does not exist"
+                elif error == 3:
+                    ret = "This users inbox is full"
+            return(ret)
 
 
     def run(self):
         print("listening...")
         connected_clients = []
+        sessions = []
         while True:
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
                 conn, addr = self.getSocket().accept()
+                s = Session(conn)
+                sessions.append(s)
                 connected_clients.append(conn)
+
                 print('Connection address:', addr)
 
             clients_allowed = []
@@ -169,14 +167,15 @@ class Server:
                 pass
 
             else:
-                for conn in clients_allowed:
-                    data = conn.recv(self.getBUFFER_SIZE())
-                    if data:
-                        ret_data = self.handleReq(data)
-                        conn.send(ret_data.encode())
-                    else:
-                        print(conn.getsockname(), "disconnected")
-                        connected_clients.remove(conn)
+                for s in sessions:
+                    if s.conn in clients_allowed:
+                        data = s.conn.recv(self.getBUFFER_SIZE())
+                        if data:
+                            ret_data = self.handleReq(data, s)
+                            s.conn.send(ret_data.encode())
+                        else:
+                            print(s.conn.getsockname(), "disconnected")
+                            connected_clients.remove(s.conn)
 
 if __name__ == "__main__":
     s = Server('127.0.0.1',5005,1024)
