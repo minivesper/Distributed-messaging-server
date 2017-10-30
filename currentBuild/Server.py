@@ -44,13 +44,82 @@ class Server:
     def handleReq(self, data):
         data = data.decode()
         if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None)
+            lg = LOGN(None, None, None)
             lg.decode(data)
-            ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass())
-            if(ver):
-                ret = (" logged in successfully.")
+            print("lg", lg)
+            if(lg.getPermis() == "2"):
+                print("I am here")
+                ver, err = self.db.verify("./data/adminlogin.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
+                if(ver):
+                    ret = ("logged in successfully.")
+                else:
+                    ret = ("not verified")
+                return(ret)
+            elif(lg.getPermis()=="3"):
+                ver, err = self.db.verify("./data/masteradmin.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
+                if(ver):
+                    ret = (" logged in successfully.")
+                else:
+                    ret = ("not verified")
+                return(ret)
             else:
-                ret = ("not verified")
+                ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
+                if(ver):
+                    ret = (" logged in successfully.")
+                else:
+                    ret = ("not verified")
+                return(ret)
+
+        elif data[0:4] == "CACM":
+            ca = CACM(None, None, None, None)
+            ca.decode(data)
+            print(ca)
+            if ca.getPermis() == "2":
+                error = self.db.checkDuplicate("./data/adminlogin.txt", ca.getUsername())
+                if error == 0:
+                    admin = self.db.getAdmin("./data/masteradmin.txt")
+                    data = data.replace("CACM", "AAPR")
+                    data += "|" + admin
+                    aa = AAPR(None,None,None,None,None)
+                    aa.decode(data)
+                    error3 = self.db.write("./data/approvalreq.txt", str(aa))
+                    error2 = self.db.write("./data/adminlogin.txt", str(ca))
+                    if error2 == 0:
+                        ret = ("Account created, waiting on approval")
+                    elif error2 == 1:
+                        ret = "Error in sending message"
+                    elif error2 == 2:
+                        ret = "File does not exist"
+                    elif error == 3:
+                        ret = ("username already exists, please enter a new username")
+                return(ret)
+            else:
+                error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
+                if error == 0:
+                    error2 = self.db.write("./data/logindata.txt", str(ca))
+                    if error2 == 0:
+                        ret = ("Account created successfully")
+                    elif error2 == 1:
+                        ret = "Error in sending message"
+                    elif error2 == 2:
+                        ret = "File does not exist"
+                elif error == 1:
+                    ret = ("could not read messages")
+                elif error == 2:
+                    ret = ("could not open file")
+                elif error == 3:
+                    ret = ("username already exists, please enter a new username")
+            return(ret)
+
+        elif(data[0:4] == "CAPR"):
+            cm = CAPR(None)
+            cm.decode(data)
+            messages = []
+            messages, error = self.db.readappr("./data/approvalreq.txt", str(cm))
+            rm = RMSG(None, None)
+            a = rm.encode(messages)
+            if error == 0:
+                ret = a
             return(ret)
 
         elif(data[0:4] == "CMSG"):
@@ -63,10 +132,7 @@ class Server:
             print(a)
             if error == 0:
                 ret = a
-            elif error == 1:
-                ret = "could not read messages"
-            elif error == 2:
-                ret = "could not open file"
+
             #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
             #parse through the database txt and return all messages with matching recipiant
             return(ret)
@@ -83,6 +149,7 @@ class Server:
             elif error == 2:
                 ret = "File does not exist"
         return(ret)
+
 
     def run(self):
         print("listening...")
