@@ -7,6 +7,7 @@ class LOGN:
     def __init__(self,Username,passwd):
         self.Username = Username
         self.passwd = passwd
+        self.type = "LOGN"
 
     def getUsername(self):
         return self.Username
@@ -52,6 +53,7 @@ class SMSG:
         self.Username = Username
         self.Recipient = Recipient
         self.Message = Message
+        self.type = "SMSG"
 
     def encode(self):
         sendStr = "SMSG"
@@ -83,7 +85,7 @@ class RMSG:
     def __init__(self, user_sendto, messages):
         self.user_sendto = user_sendto
         self.messages = messages
-
+        self.type = "RMSG"
     def getuser_sendto(self):
         return self.user_sendto
 
@@ -129,7 +131,8 @@ class RMSG:
 class CMSG:
 
     def __init__(self, Username):
-    	self.Username = Username
+        self.Username = Username
+        self.type = "CMSG"
 
     def getUsername(self):
         return self.Username

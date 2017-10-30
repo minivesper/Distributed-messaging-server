@@ -136,8 +136,9 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-        c = Client('127.0.0.1',5005,1024)
-        while !user:
-            user = c.inputCredentials()
-        c.run(user)
+    c = Client('127.0.0.1',5005,1024)
+    while True:
+        user = c.inputCredentials()
+        if user:
+            c.run(user)
                 # c.chooseMessage(user)

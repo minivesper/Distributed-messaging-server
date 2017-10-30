@@ -6,9 +6,12 @@ class Database:
     def __init__(self):
         f = open("./data/logindata.txt","r")
         for line in f:
+
+            #inits message files
             lp = line.split(",")
             fname = "./data/" + lp[0] + ".txt"
             nf = open(fname, "a+")
+
         return
 
     def verify(self, fname, username, passwd):
