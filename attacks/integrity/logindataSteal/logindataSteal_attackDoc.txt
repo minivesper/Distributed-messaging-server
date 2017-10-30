@@ -1,7 +1,18 @@
-Vulnerable Git tag/branch
-Risk - What might be lost by the owner (confidentiality/availability/integrity) or gained by the attacker
-Threat Model - What can the adversary (attacker) do?
-Vulnerability - What is the software defect that enables the attack?
-Exploit - Instructions/script to expose the vulnerability
-Patch/Mitigation - How to do we remove the vulnerability?
+Vulnerable tag: logindataSteal_vulnerable
+patched tag: logindataSteal_patched
+This bug allows for a clever client to access all the login data. that is all the usernames and passwords. Not ideal. This means all confidentiality is lost
+and this attacker can get all the info on the server. All the attacker has to do is format a CMSG request that asks for the login txt file. The
+database read is coded such that all the information from the file is returned if it is asked for. All the malicious attacked has to do is format their own request
+instead of using our client. The database returns the entire file asked for instead of selecting lines or messages. This means that if the login data file gets opened
+the whole thing gets returned.
+
+Exploit:
+
+run the standard server
+connected logindataSteal.py to the server.
+When run finishes, the client will be returned an RMSG with all the usernames and passwords in it.
+
+To patch the logindata file will have permission adjusted, and a session object will be created to certify every request
+a user sends.
+
 Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?
