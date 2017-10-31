@@ -1,5 +1,6 @@
 import os
 import sys
+import fileinput
 
 class Database:
 
@@ -34,7 +35,7 @@ class Database:
         return(found,0)
 
     def getAdmin(self, fname):
-        adminuser = ""
+        adminusers = []
         try:
            f = open(fname, 'r')
            f.close()
@@ -42,17 +43,19 @@ class Database:
                with open(fname) as infile:
                    for line in infile:
                        lparts = line.split(",")
-                       adminuser = lparts[0]
+                       if lparts[2][:-1] == "3":
+                           adminusers.append(lparts[0])
                        #later on we could extend this to send a message to all admin people that one person wants approval. Right now, only send to one.
            except IOError as e:
                print("could not read from file %s"%(e))
-               return adminuser
+               return 1
            finally:
                f.close()
         except (IOError, OSError) as e:
            print("could not open file %s"%(e))
-           return adminuser
-        return adminuser
+           return 2
+        print(adminusers)
+        return adminusers
 
     def checkDuplicate(self, fname, username):
         try:
@@ -63,6 +66,8 @@ class Database:
                    for line in infile:
                        lparts = line.split(",")
                        if(lparts[0] == username):
+                           print("lparts", lparts[0])
+                           print(username)
                            print("username already exists")
                            return 3
            except IOError as e:
@@ -75,8 +80,38 @@ class Database:
            return 2
         return 0
 
+    def updateUser(self, fname, username, ouser, tag, perm):
 
-    def write(self,fname, writeText):
+        with fileinput.FileInput(fileinput, inplace=True, backup='.bak') as file:
+            file.readline()
+            for line in file:
+                lparts = line.split(",")
+                if lparts[1] == ouser:
+                    lparts.replace(lparts[tag],perm)
+            return(1)
+        return(0)
+
+    def write2(self, fname, writeText):
+        try:
+            f = open(fname, 'a')
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    f.write(writeText + "\n")
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
+
+    def write(self,recipient, writeText):
         try:
             fname = "./data/" + recipient + ".txt"
             f = open(fname, 'a')
@@ -96,47 +131,6 @@ class Database:
             return(2)
         return(0)
 
-    def readappr(self,fname,username):
-        messages = []
-        try:
-           f = open(fname, 'r')
-           f.close()
-           try:
-               with open(fname) as infile:
-                   for line in infile:
-                       lparts = line.split(",")
-                       if(lparts[4] == username):
-                           messages.append(line[:-1])
-           except IOError as e:
-               print("could not read from file %s"%(e))
-               return None, 1
-           finally:
-               f.close()
-        except (IOError, OSError) as e:
-           print("could not open file %s"%(e))
-           return None, 2
-        return messages, 0
-
-    def read(self,fname,username):
-        messages = []
-        try:
-           f = open(fname, 'r')
-           f.close()
-           try:
-               with open(fname) as infile:
-                   for line in infile:
-                       lparts = line.split(",")
-                       if(lparts[4] == username):
-                           messages.append(line[:-1])
-           except IOError as e:
-               print("could not read from file %s"%(e))
-               return None, 1
-           finally:
-               f.close()
-        except (IOError, OSError) as e:
-           print("could not open file %s"%(e))
-           return None, 2
-        return messages, 0
 
     def read(self,fname,username):
         messages = []
