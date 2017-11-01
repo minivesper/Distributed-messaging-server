@@ -6,19 +6,17 @@ class Session:
         self.conn = socket
         self.db = Database()
         self.loggedin = False
-
         self.username = None
-
         self.LOGNp = True
         self.SMSGp = False
         self.CMSGp = False
         self.RMSGp = False
-        self.UPERp = False
+        self.UPDTp = False
         self.CACMp = True
         self.DMSGp = False
 
     def loginAttempt(self, LOGNreq):
-        ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
+        ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass(), LOGNreq.getPermis())
         if ver:
             self.username = LOGNreq.getUsername()
             self.loggedin = True
@@ -33,11 +31,11 @@ class Session:
         for line in f:
             lparts = line[:-1].split(",")
             if lparts[0] == user:
-                self.LONGp = lparts[1]
+                self.LOGNp = lparts[1]
                 self.SMSGp = lparts[2]
                 self.CMSGp = lparts[3]
                 self.RMSGp = lparts[4]
-                self.UPERp = lparts[5]
+                self.UPDTp = lparts[5]
                 self.CACMp = lparts[6]
                 self.DMSGp = lparts[7]
         #go into permission matrix and set booleans
@@ -50,6 +48,8 @@ class Session:
         if(self.CMSGp == "1" and data.type == "CMSG" and data.Username == self.username):
             return True
         if(self.DMSGp == "1" and data.type == "DMSG" and data.Username == self.username):
+            return True
+        if(self.UPDTp == "1" and data.type == "UPDT" and data.Username == self.username):
             return True
         else:
             return False

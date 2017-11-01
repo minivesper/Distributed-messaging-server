@@ -4,29 +4,120 @@ import getpass
 from pprint import pprint
 
 class LOGN:
-    def __init__(self,Username,passwd):
-        self.Username = Username
+    def __init__(self,username,passwd,permission):
+        self.username = username
         self.passwd = passwd
+        self.permission = permission
         self.type = "LOGN"
 
     def getUsername(self):
-        return self.Username
+        return self.username
+
+    def getPermis(self):
+        return self.permission
 
     def getPass(self):
         return self.passwd
 
     def encode(self):
         sendStr = "LOGN|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass()
+        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis())
         return sendStr
 
     def decode(self, stream):
         s = stream.split("|")
-        self.Username = s[2]
+        self.username = s[2]
         self.passwd = s[4]
+        self.permission = s[5]
+
 
     def __repr__(self):
-        return("%s,%s"%(self.getUsername(), self.getPass()))
+        return("%s,%s,%s"%(self.getUsername(), self.getPass(), self.getPermis()))
+
+
+class UPDT:
+    def __init__(self, Username, ouser, Tag, Perm):
+        self.Username = Username
+        self.Tag = Tag
+        self.Perm = Perm
+        self.ouser = ouser
+        self.type = "UPDT"
+
+    def getUsername(self):
+        return self.Username
+
+    def getouser(self):
+        return self.ouser
+
+    def getTag(self):
+        return self.Tag
+
+    def getPerm(self):
+        return self.Perm
+
+    def interpretTag(self, Tag):
+        if Tag == "LOGN":
+            ret = "1"
+        elif Tag == "SMSG":
+            ret = "2"
+        elif Tag =="CMSG":
+            ret = "3"
+        elif Tag == "RMSG":
+            ret = "4"
+        elif Tag == "UPDT":
+            ret = "5"
+        elif Tag == "CACM":
+            ret = "6"
+        return (ret)
+
+    def encode(self, Tag):
+        tagUp = self.interpretTag(Tag)
+        sendStr = "UPDT|"
+        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getouser())) + "|" + self.getouser()+ "|" + str(len(tagUp)) + "|" + tagUp + "|" + str(len(self.getPerm())) + "|" + self.getPerm()
+        return sendStr
+
+    def decode(self, stream):
+        spstr = stream.split("|")
+        self.Username = spstr[2]
+        self.ouser = spstr[4]
+        self.Tag = spstr[6]
+        self.Perm = spstr[8]
+
+    def __repr__(self):
+        return("%s, %s, %s, %s"%(self.getUsername(), self.getouser(), self.getTag(), self.getPermis()))
+
+
+
+class CACM:
+    def __init__(self, username, password, permission):
+        self.username = username
+        self.password = password
+        self.permission = permission
+
+    def getUsername(self):
+        return self.username
+
+    def getPass(self):
+        return self.password
+
+    def getPermis(self):
+        return self.permission
+
+    def encode(self):
+        sendStr = "CACM|"
+        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis())
+        return sendStr
+
+    def decode(self, parseStr):
+        parselist = parseStr.split("|")
+        print(parselist)
+        self.username = parselist[2]
+        self.password = parselist[4]
+        self.permission = parselist[5]
+
+    def __repr__(self):
+        return("%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis()))
+
 
 class SMSG:
     def __init__(self, Username, Recipient, Message):
@@ -42,11 +133,9 @@ class SMSG:
 
     def decode(self, parseStr):
         parselist = parseStr.split("|")
-        print(parselist)
         self.Username = parselist[2]
         self.Recipient = parselist[4]
         self.Message = parselist[6]
-
 
     def getUsername(self):
         return self.Username

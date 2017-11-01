@@ -1,5 +1,6 @@
 import socket
 import sys
+import re
 import getpass
 # import inquirer
 from Requests import *
@@ -78,7 +79,20 @@ class Client:
             message_num = int(message_num)
             req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
             req = req.encode()
-        elif(inp_str == "quit"):
+        elif(inp_str == "UPDT"):
+            userupdt = input("which user do you want to update? ")
+            #Todo need to check if user exists
+            permname = input("what permission do you want to change? ")
+            while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM")):
+                print("Need to input LOGN, RMSG, CMSG, UPDT, or CACM")
+                permname = input("what permission do you want to change? ")
+            permbool = input("Input change: ")
+            while (permbool not in("0","1")):
+                print("Need to input 0 or 1")
+                permbool = input("Input change: ")
+            req = UPDT(username, userupdt, permname, permbool)
+            req = req.encode(permname)
+        elif(inp_str == "QUIT"):
             self.getSocket().close()
             sys.exit(1)
         if(req != ""):
@@ -104,22 +118,89 @@ class Client:
             inp = input("enter Command: ").upper()
             self.handleCommand(inp, currentUsername)
 
+    def createUser(self):
+        user = None
+        inp = input("Welcome: enter command ").upper()
+        if inp == "LOGN":
+            user, pwd, permission = self.inputCredentials()
+            return user
+        elif inp == "CACM":
+            user, pwd, permission = self.getCredentials()
+            user = self.checkCredentials(user, pwd, permission)
+            return user
+        else:
+            print("%s is not a valid request type"%(inp))
+            return user
+
+    def getCredentials(self):
+        print("please enter a username with only letters and numbers")
+        user = input("Username: ")
+        while (re.search("[a-z|0-9]", user)) is None:
+            print("please enter a username with only letters and numbers")
+            user = input("Username: ")
+            while (len(user))>15:
+                print("please enter a username with 15 characters")
+                user = input("Username: ")
+        print("Please create a password")
+        pwd = getpass.getpass("Password for " + user + ":")
+        while(len(pwd))<8:
+            print("Password needs to be a minimum of 8 characters")
+            pwd = getpass.getpass("Password for " + user + ":")
+        while(len(pwd))>15:
+            print("Password needs to be a max of 15 characters")
+            pwd = getpass.getpass("Password for " + user + ":")
+        while(re.search("[a-z]", pwd)) is None:
+            print("Password needs to contain 1 lowercase value")
+            pwd = getpass.getpass("Password for " + user + ":")
+        while(re.search("[A-Z]", pwd)) is None:
+            print("Password needs to contain 1 uppercase value")
+            pwd = getpass.getpass("Password for " + user + ":")
+        while(re.search("[0-9]", pwd)) is None:
+            print("Password needs to contain 1 number")
+            pwd = getpass.getpass("Password for " + user + ":")
+        while(re.search("[!@#$%^&*]", pwd)) is None:
+            print("Password needs to contain a special character (!@#$%^&*)")
+            pwd = getpass.getpass("Password for " + user + ":")
+        permission = input("Permission code: ")
+        while permission != "1" and permission != "2":
+            print("Permission code needs to be 1 for member or 2 for admin access")
+            permission = input("Permission code: ")
+        return user, pwd, permission
+
+    def checkCredentials(self, user, pwd, permission):
+        lreq = CACM(user,pwd,permission)
+        lreq= lreq.encode()
+        self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+        data = self.getSocket().recv(self.getBUFFER_SIZE())
+        if(data.decode() == "username already exists, please enter a new username"):
+            print(data.decode())
+            user = self.createUser()
+            return
+        if permission == "2":
+            print("Your credentials have been sent to admin, checkback later for approval")
+            sys.exit(1)
+            return user
+        else:
+            print(data.decode())
+            return user
+
     def inputCredentials(self):
         user = input("Username: ")
         passwd = getpass.getpass("Password for " + user + ":")
-        lreq = LOGN(user,passwd)
+        permission = input("Permission code: ")
+        lreq = LOGN(user,passwd,permission)
         lreq = lreq.encode()
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
         if(data.decode() == "not verified"):
             print(data.decode())
             user = None
-            return user
+            return user, passwd, permission,
         else:
             # s = self.getSocket()
             # data = self.recvall(s)
-            print(data.decode())
-            return user
+            #print(data.decode())
+            return user, passwd, permission
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
@@ -146,7 +227,7 @@ class Client:
 if __name__ == "__main__":
     c = Client('127.0.0.1',5005,1024)
     while True:
-        user = c.inputCredentials()
+        user = c.createUser()
         if user:
             c.run(user)
                 # c.chooseMessage(user)

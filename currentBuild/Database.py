@@ -1,5 +1,8 @@
 import os
 import sys
+import fileinput
+import re
+import shutil
 
 class Database:
 
@@ -13,14 +16,14 @@ class Database:
             nf = open(fname, "a+")
         return
 
-    def verify(self, fname, username, passwd):
+    def verify(self, fname, username, passwd, permission):
         found = False
         try:
             f = open(fname, 'r')
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username and lparts[1][:-1] == passwd):
+                    if(lparts[0] == username and lparts[1] == passwd and lparts[2][:-1] == permission):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
                 print("could not write to file %s"%(e))
@@ -32,7 +35,105 @@ class Database:
             return(False, 2)
         return(found,0)
 
-    def write(self, recipient, writeText):
+    def getAdmin(self, fname):
+        adminusers = []
+        try:
+           f = open(fname, 'r')
+           f.close()
+           try:
+               with open(fname) as infile:
+                   for line in infile:
+                       lparts = line.split(",")
+                       if lparts[2][:-1] == "3":
+                           adminusers.append(lparts[0])
+                       #later on we could extend this to send a message to all admin people that one person wants approval. Right now, only send to one.
+           except IOError as e:
+               print("could not read from file %s"%(e))
+               return 1
+           finally:
+               f.close()
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+           return 2
+        print(adminusers)
+        return adminusers
+
+    def checkDuplicate(self, fname, username):
+        try:
+           f = open(fname, 'r')
+           f.close()
+           try:
+               with open(fname) as infile:
+                   for line in infile:
+                       lparts = line.split(",")
+                       if(lparts[0] == username):
+                           print(username)
+                           print("username already exists")
+                           return 3
+           except IOError as e:
+               print("could not read from file %s"%(e))
+               return 1
+           finally:
+               f.close()
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+           return 2
+        return 0
+
+    def checkexistance(self, fname, ouser):
+        with open(fname) as infile:
+            for line in infile:
+                lparts = line.split(",")
+                for i in range(len(lparts)):
+                    if lparts[i] == ouser:
+                        return 0
+            print("username does not exist")
+            return 1
+
+
+    def updateUser(self, fname, username, ouser, tag, perm):
+
+        usercha = re.compile(ouser)
+        try:
+            f = open("./data/copyperm.txt", 'w')
+            with open(fname) as infile:
+                for line in infile:
+                    lparts = line.split(",")
+                    print("lparts11", lparts)
+                    for i in range(len(lparts)):
+                        found = usercha.search(lparts[i])
+                        if found:
+                            lparts[int(tag)] = perm
+                    print("lpart", lparts[i])
+                    f.write(",".join(lparts))
+                dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
+
+    def write2(self, fname, writeText):
+        try:
+            f = open(fname, 'a')
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    f.write(writeText + "\n")
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
+
+    def write(self,recipient, writeText):
         try:
             fname = "./data/" + recipient + ".txt"
             f = open(fname, 'a')
