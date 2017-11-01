@@ -6,6 +6,8 @@ import sys
 from Requests import *
 from pprint import pprint
 
+ADDRESS_OF_SERVER = '127.0.0.1'
+
 class Client:
     def __init__(self,TCP_IP,TCP_PORT,BUFFER_SIZE):
         self.TCP_IP = TCP_IP
@@ -137,7 +139,7 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-        c = Client('127.0.0.1',5005,1024)
+        c = Client(ADDRESS_OF_SERVER,5005,1024)
         while True:
             user = c.inputCredentials()
             if user:

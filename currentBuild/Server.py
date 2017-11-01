@@ -4,6 +4,8 @@ import select
 from Requests import *
 from Database import *
 
+ADDRESS_OF_CLIENT = '127.0.0.1'
+
 class Server:
 
     def __init__(self,TCP_IP,TCP_PORT,BUFFER_SIZE):
@@ -112,5 +114,5 @@ class Server:
                         connected_clients.remove(conn)
 
 if __name__ == "__main__":
-    s = Server('127.0.0.1',5005,1024)
+    s = Server(ADDRESS_OF_CLIENT,5005,1024)
     s.run()
