@@ -63,7 +63,6 @@ class Server:
             ca = CACM(None, None, None)
             ca.decode(data)
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
-            print(error)
             if error == 0:
                 ret =("Account created successfully")
                 error2 = self.db.write2("./data/logindata.txt", str(ca))
@@ -76,51 +75,53 @@ class Server:
                             ret = "could not open file"
                         else:
                             caf = str(ca.getUsername()) + ",1,1,1,1,0,0"
-                            self.db.write2("./data/permissionMatrix.txt", str(caf))
-                            for a in admin:
-                                print(a)
-                                #data = str(ca.getUsername()) + a + str(ca.getPermis())
-                                data = "SMSG|" + str(len(ca.getUsername())) + "|" + ca.getUsername() + "|" + str(len(a)) + "|" + a + "|" + str(len(ca.getPermis())) + "|" + "requesting permissions %s"%ca.getPermis()
-                                #data.enocde()
-                                sobj = SMSG(None, None, None)
-                                sobj.decode(data)
-                                #if(session.check(sobj)):
-                                #sobjec.decode(data)
-                                error = self.db.write(sobj.getRecipient(), str(sobj))
-                                if error == 0:
-                                    ret = "Message sent to admin"
-                                elif error == 1:
-                                    ret = "Error in sending message to admin"
-                                elif error == 2:
-                                    ret = "File does not exist"
-                                elif error == 3:
-                                    ret = "Admin's userbox is full"
+                            perror = self.db.write2("./data/permissionMatrix.txt", str(caf))
+                            if perror == 1:
+                                ret = "can't wright to permissions"
+                            elif perror == 2:
+                                ret = "could not open permissions file"
+                            elif perror == 3:
+                                ret = "permission file full"
+                            elif perror == 0:
+                                for a in admin:
+                                    data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
+                                    error = self.db.write(a, data)
+                                    if error == 0:
+                                        ret = "Message sent to admin"
+                                    elif error == 1:
+                                        ret = "Error in sending message to admin"
+                                    elif error == 2:
+                                        ret = "File does not exist"
+                                    elif error == 3:
+                                        ret = "Admin's userbox is full"
                                 return (ret)
-                    elif error2 == 1:
-                        ret = "Error in sending message to admin"
-                    elif error2 == 2:
-                        ret = "File does not exist"
-                    elif error2 == 3:
-                        ret = "Admin's userbox is full"
-                    return (ret)
-                else:
-                    ca = str(ca.getUsername()) + ",1,1,1,1,0,0"
-                    error3 = self.db.write2("./data/permissionMatrix.txt", str(ca))
-                    if error3 == 0:
-                        ret = ("Account created successfully created")
-                    elif error3 == 1:
-                        ret = "Error in writing permissions message"
-                    elif error3 == 2:
-                        ret = "File does not exist"
-                    elif error3 == 3:
-                        ret = ("permission matrix is full")
-                    return (ret)
+                            return(ret)
+                    else:
+                        ca = str(ca.getUsername()) + ",1,1,1,1,0,0"
+                        error3 = self.db.write2("./data/permissionMatrix.txt", str(ca))
+                        if error3 == 0:
+                            ret = ("Account created successfully created")
+                        elif error3 == 1:
+                            ret = "Error in writing permissions message"
+                        elif error3 == 2:
+                            ret = "File does not exist"
+                        elif error3 == 3:
+                            ret = ("permission matrix is full")
+                        return (ret)
+                elif error2 == 1:
+                    ret = "Error in sending message to admin"
+                elif error2 == 2:
+                    ret = "File does not exist"
+                elif error2 == 3:
+                    ret = "Admin's userbox is full"
+                return (ret)
             elif error == 1:
                 ret = ("Error in sending message")
             elif error == 2:
                 ret = "File does not exist"
             elif error == 3:
                 ret = ("username already exists, please enter a new username")
+                print("ret",ret)
             return(ret)
 
         elif(data[0:4] == "CMSG"):
@@ -144,7 +145,10 @@ class Server:
             #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
             sobj.decode(data)
-            print("sobj", sobj)
+            uerror = self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())
+            if uerror == 1:
+                ret = "username does not exist"
+                return ret
             if(session.check(sobj)):
                 error = self.db.write(sobj.getRecipient(), str(sobj))
                 if error == 0:
@@ -155,11 +159,18 @@ class Server:
                     ret = "File does not exist"
                 elif error == 3:
                     ret = "This users inbox is full"
-            return(ret)
+                return(ret)
+            else:
+                ret = "you do not have this permission"
+                return ret
+
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)
             uobj.decode(data)
-            print("ha", session.check(ubj))
+            uerror = self.db.checkexistance("./data/permissionMatrix.txt", uobj.getouser())
+            if uerror == 1:
+                ret = "username does not exist"
+                return ret
             if(session.check(uobj)):
                 error = self.db.updateUser("./data/permissionMatrix.txt", uobj.getUsername(), uobj.getouser(), uobj.getTag(), uobj.getPerm())
                 if error== 0:

@@ -6,9 +6,7 @@ class Session:
         self.conn = socket
         self.db = Database()
         self.loggedin = False
-
         self.username = None
-
         self.LOGNp = True
         self.SMSGp = False
         self.CMSGp = False
@@ -38,20 +36,16 @@ class Session:
                 self.RMSGp = lparts[4]
                 self.UPDTp = lparts[5]
                 self.CACMp = lparts[6]
+
         #go into permission matrix and set booleans
 
     def check(self, data):
-        print("log", self.loggedin)
         if not self.loggedin:
             return False
-
         if(self.SMSGp == "1" and data.type == "SMSG" and data.Username == self.username):
             return True
         if(self.CMSGp == "1" and data.type == "CMSG" and data.Username == self.username):
             return True
-        print(self.UPDTp)
-        print(data.type)
-        print(data.Username)
         if(self.UPDTp == "1" and data.type == "UPDT" and data.Username == self.username):
             return True
         else:

@@ -78,15 +78,16 @@ class Client:
             userupdt = input("which user do you want to update? ")
             #Todo need to check if user exists
             permname = input("what permission do you want to change? ")
-            while (permname != "LOGN"): # or "RMSG" or "SMSG" or "CMSG" or "UPDT" or "CACM"
+            while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM")):
+                print("Need to input LOGN, RMSG, CMSG, UPDT, or CACM")
                 permname = input("what permission do you want to change? ")
-                print(permname)
             permbool = input("Input change: ")
-            while permbool != "0": #or "1"
+            while (permbool not in("0","1")):
+                print("Need to input 0 or 1")
                 permbool = input("Input change: ")
             req = UPDT(username, userupdt, permname, permbool)
             req = req.encode(permname)
-        elif(inp_str == "quit"):
+        elif(inp_str == "QUIT"):
             self.getSocket().close()
             sys.exit(1)
         if(req != ""):
@@ -121,7 +122,6 @@ class Client:
         elif inp == "CACM":
             user, pwd, permission = self.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
-            print("user", user)
             return user
         else:
             print("%s is not a valid request type"%(inp))
@@ -168,7 +168,9 @@ class Client:
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
         if(data.decode() == "username already exists, please enter a new username"):
+            print(data.decode())
             user = self.createUser()
+            return
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
             sys.exit(1)
@@ -182,7 +184,6 @@ class Client:
         passwd = getpass.getpass("Password for " + user + ":")
         permission = input("Permission code: ")
         lreq = LOGN(user,passwd,permission)
-        print("this is lreq", lreq)
         lreq = lreq.encode()
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())

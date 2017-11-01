@@ -59,11 +59,11 @@ class UPDT:
     def interpretTag(self, Tag):
         if Tag == "LOGN":
             ret = "1"
-        elif Tag == "CMSG":
-            ret = "2"
-        elif Tag =="RMSG":
-            ret = "3"
         elif Tag == "SMSG":
+            ret = "2"
+        elif Tag =="CMSG":
+            ret = "3"
+        elif Tag == "RMSG":
             ret = "4"
         elif Tag == "UPDT":
             ret = "5"
@@ -74,8 +74,8 @@ class UPDT:
     def encode(self, Tag):
         tagUp = self.interpretTag(Tag)
         sendStr = "UPDT|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getouser())) + "|" + self.getouser()+ "|" + str(len(tagUp())) + "|" + tagUp + "|" + str(len(self.getPerm())) + "|" + self.getPerm()
-        return sendStr 
+        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getouser())) + "|" + self.getouser()+ "|" + str(len(tagUp)) + "|" + tagUp + "|" + str(len(self.getPerm())) + "|" + self.getPerm()
+        return sendStr
 
     def decode(self, stream):
         spstr = stream.split("|")
@@ -85,7 +85,7 @@ class UPDT:
         self.Perm = spstr[8]
 
     def __repr__(self):
-        return("%s, %s, %s"%(self.getUsername(), self.getTag(), self.getPermis()))
+        return("%s, %s, %s, %s"%(self.getUsername(), self.getouser(), self.getTag(), self.getPermis()))
 
 
 

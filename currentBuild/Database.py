@@ -1,6 +1,8 @@
 import os
 import sys
 import fileinput
+import re
+import shutil
 
 class Database:
 
@@ -66,7 +68,6 @@ class Database:
                    for line in infile:
                        lparts = line.split(",")
                        if(lparts[0] == username):
-                           print("lparts", lparts[0])
                            print(username)
                            print("username already exists")
                            return 3
@@ -80,16 +81,38 @@ class Database:
            return 2
         return 0
 
+    def checkexistance(self, fname, ouser):
+        with open(fname) as infile:
+            for line in infile:
+                lparts = line.split(",")
+                for i in range(len(lparts)):
+                    if lparts[i] == ouser:
+                        return 0
+            print("username does not exist")
+            return 1
+
+
     def updateUser(self, fname, username, ouser, tag, perm):
 
-        with fileinput.FileInput(fileinput, inplace=True, backup='.bak') as file:
-            file.readline()
-            for line in file:
-                lparts = line.split(",")
-                if lparts[1] == ouser:
-                    lparts.replace(lparts[tag],perm)
-            return(1)
+        usercha = re.compile(ouser)
+        try:
+            f = open("./data/copyperm.txt", 'w')
+            with open(fname) as infile:
+                for line in infile:
+                    lparts = line.split(",")
+                    print("lparts11", lparts)
+                    for i in range(len(lparts)):
+                        found = usercha.search(lparts[i])
+                        if found:
+                            lparts[int(tag)] = perm
+                    print("lpart", lparts[i])
+                    f.write(",".join(lparts))
+                dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
         return(0)
+
 
     def write2(self, fname, writeText):
         try:
