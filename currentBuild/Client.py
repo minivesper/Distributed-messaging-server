@@ -58,9 +58,6 @@ class Client:
             rm = RMSG(None,None)
             rm.decode(returnreq)
             print(rm)
-        elif(returnreq[0:4] == "RAPR"):
-            rm = RAPR(None, None)
-            rm.decode(returnreq)
         else:
             print(returnreq)
 
@@ -194,7 +191,7 @@ class Client:
         else:
             # s = self.getSocket()
             # data = self.recvall(s)
-            print(data.decode())
+            #print(data.decode())
             return user, passwd, permission
 
     #inquirer code we are not using for the time being

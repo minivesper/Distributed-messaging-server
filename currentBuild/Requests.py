@@ -22,7 +22,6 @@ class LOGN:
     def encode(self):
         sendStr = "LOGN|"
         sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis())
-        print(sendStr)
         return sendStr
 
     def decode(self, stream):
