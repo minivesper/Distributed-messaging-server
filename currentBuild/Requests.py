@@ -1,7 +1,11 @@
 import socket
 import getpass
+import base64
 # import inquirer
+#from Crypto.Cipher import AES
 from pprint import pprint
+
+cipher = AES.new('5050',AES.MODE_ECB)
 
 class LOGN:
     def __init__(self,username,passwd,permission):
@@ -117,6 +121,14 @@ class CACM:
         self.password = parselist[4]
         self.permission = parselist[5]
 
+    #def encrypt(self,string):
+    #    encrypted_string = base64.b64encode(cipher.encrypt(string))
+    #    return encrypted_string
+
+    #def decrypt(self,string):
+    #    decrypted_string = cipher.decrypt(base64.b64decode(string))
+    #    return decrypted_string
+
     def __repr__(self):
         return("%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis()))
 
@@ -138,6 +150,14 @@ class SMSG:
         self.Username = parselist[2]
         self.Recipient = parselist[4]
         self.Message = parselist[6]
+
+#    def encrypt(self,string):
+#        encrypted_string = base64.b64encode(cipher.encrypt(string))
+#        return encrypted_string
+
+#    def decrypt(self,string):
+#        decrypted_string = cipher.decrypt(base64.b64decode(string))
+#        return decrypted_string
 
     def getUsername(self):
         return self.Username
@@ -192,6 +212,14 @@ class RMSG:
                 single_message = []
         self.messages = write_messages
 
+#    def encrypt(self,string):
+#        encrypted_string = base64.b64encode(cipher.encrypt(string))
+#        return encrypted_string
+
+#    def decrypt(self,string):
+#        decrypted_string = cipher.decrypt(base64.b64decode(string))
+#        return decrypted_string
+
     def __repr__(self):
         printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
         for m in self.messages:
@@ -240,10 +268,20 @@ class CMSG:
 
     def encode(self):
         return "CMSG|" + str(len(self.getUsername())) + "|" + self.getUsername()
+        #return self.encrypt(string)
 
     def decode(self,stream):
+        #stream = self.decrypt(stream)
         spstr = stream.split("|")
         self.Username = spstr[2]
+
+    #def encrypt(self,string):
+    #    encrypted_string = base64.b64encode(cipher.encrypt(string))
+    #    return encrypted_string
+
+    #def decrypt(self,string):
+    #    decrypted_string = cipher.decrypt(base64.b64decode(string))
+    #    return decrypted_string
 
     def __repr__(self):
         return("%s"%(self.getUsername()))
