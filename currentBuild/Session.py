@@ -15,11 +15,12 @@ class Session:
         self.RMSGp = False
         self.UPERp = False
         self.CACMp = True
+        self.DMSGp = False
 
     def loginAttempt(self, LOGNreq):
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
         if ver:
-            self.username = LOGNreq .getUsername()
+            self.username = LOGNreq.getUsername()
             self.loggedin = True
             self.setper(self.username)
             return True
@@ -30,7 +31,7 @@ class Session:
         f = open("./data/permissionMatrix.txt")
         f.readline()
         for line in f:
-            lparts = line.split(",")
+            lparts = line[:-1].split(",")
             if lparts[0] == user:
                 self.LONGp = lparts[1]
                 self.SMSGp = lparts[2]
@@ -38,6 +39,7 @@ class Session:
                 self.RMSGp = lparts[4]
                 self.UPERp = lparts[5]
                 self.CACMp = lparts[6]
+                self.DMSGp = lparts[7]
         #go into permission matrix and set booleans
 
     def check(self, data):
@@ -46,6 +48,8 @@ class Session:
         if(self.SMSGp == "1" and data.type == "SMSG" and data.Username == self.username):
             return True
         if(self.CMSGp == "1" and data.type == "CMSG" and data.Username == self.username):
+            return True
+        if(self.DMSGp == "1" and data.type == "DMSG" and data.Username == self.username):
             return True
         else:
             return False

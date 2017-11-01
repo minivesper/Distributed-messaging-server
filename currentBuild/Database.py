@@ -11,7 +11,6 @@ class Database:
             lp = line.split(",")
             fname = "./data/" + lp[0] + ".txt"
             nf = open(fname, "a+")
-
         return
 
     def verify(self, fname, username, passwd):
@@ -48,6 +47,22 @@ class Database:
             else:
                 print("inbox is full error")
                 return(3)
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
+    def delete(self, recipient, deleteText):
+        try:
+            fname = "./data/" + recipient + ".txt"
+            f = open(fname, 'r+')
+            lines = f.readlines()
+            f.seek(0)
+            for line in lines:
+                if line[:-1] != deleteText:
+                    f.write(line)
+            f.truncate()
+            f.close()
         except (IOError, OSError) as e:
             print("could not open file %s"%(e))
             return(2)

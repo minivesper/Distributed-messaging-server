@@ -87,6 +87,19 @@ class Server:
                 elif error == 3:
                     ret = "This users inbox is full"
             return(ret)
+        elif data[0:4]=="DMSG":
+            #create an empty SMSG object to use our decode function to fill in fields
+            dobj = DMSG(None, None, None)
+            dobj.decode(data)
+            if(session.check(dobj)):
+                error = self.db.delete(dobj.getUsername(), str(dobj))
+                if error == 0:
+                    ret = "Message sent successfully"
+                elif error == 1:
+                    ret = "Error in deleting message"
+                elif error == 2:
+                    ret = "File does not exist"
+            return(ret)
 
     def run(self):
         print("listening...")

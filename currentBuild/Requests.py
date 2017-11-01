@@ -28,26 +28,6 @@ class LOGN:
     def __repr__(self):
         return("%s,%s"%(self.getUsername(), self.getPass()))
 
-    #may be a direction we go when we get rid of bars
-    # def decode(self, stream):
-    #     userlen = ""
-    #     user = ""
-    #     passlen = ""
-    #     password = ""
-    #     for i in range(4, len(stream)):
-    #         if(stream[i] != "|" and isinstance(userlen, str)):
-    #             userlen += stream[i]
-    #         elif(stream[i] == "|" and passlen == ""):
-    #             userlen = int(userlen)
-    #             print(userlen)
-    #         elif(stream[i] != "|" and isinstance(userlen, int)):
-    #             passlen += stream[i]
-    #         elif(stream[i] == "|" and isinstance(userlen, int)):
-    #             passlen = int(passlen)
-    #     print(passlen)
-    #     print(userlen)
-
-
 class SMSG:
     def __init__(self, Username, Recipient, Message):
         self.Username = Username
@@ -124,9 +104,39 @@ class RMSG:
     def __repr__(self):
         printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
         for m in self.messages:
-            singlestr = "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
+            singlestr = "MSG#" + str(self.messages.index(m)+1) +"\n"+ "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
             printstr += singlestr
         return printstr
+
+class DMSG:
+
+    def __init__(self,Username,Recipient,Message):
+            self.Username = Recipient
+            self.Recipient = Username
+            self.Message = Message
+            self.type = "DMSG"
+
+    def encode(self):
+        return "DMSG|" + str(len(self.Username)) + "|" + self.getUsername() +"|" + str(len(self.Recipient)) + "|" + self.getRecipient() +"|" + str(len(self.Message)) + "|" + self.getMessage()
+
+    def decode(self, parseStr):
+        parselist = parseStr.split("|")
+        print(parselist)
+        self.Username = parselist[2]
+        self.Recipient = parselist[4]
+        self.Message = parselist[6]
+
+    def getUsername(self):
+        return self.Username
+
+    def getRecipient(self):
+        return self.Recipient
+
+    def getMessage(self):
+        return self.Message
+
+    def __repr__(self):
+        return("%s,%s,%s"%(self.Recipient,self.Username,self.Message))
 
 class CMSG:
 

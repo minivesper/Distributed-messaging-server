@@ -1,6 +1,6 @@
-user,LOGNp,CMSGp,RMSGp,SMSGp,UPERp,CACMp
-ele,,1,1,1,0,0
-abbie,1,1,1,1,0,0
-1,1,1,1,1,0,0
-poo,1,1,1,1,0,0
-apt,1,1,1,1,0,0
+user,LOGNp,CMSGp,RMSGp,SMSGp,UPERp,CACMp,DMSGp
+ele,1,1,1,1,0,0,1
+abbie,1,1,1,1,0,0,1
+1,1,1,1,1,0,0,1
+poo,1,1,1,1,0,0,1
+apt,1,1,1,1,0,0,1

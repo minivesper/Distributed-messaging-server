@@ -10,6 +10,8 @@ class Client:
         self.TCP_IP = TCP_IP
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
+        self.cachedMessages = None
+
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             print("Socket created successfully")
@@ -56,6 +58,7 @@ class Client:
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
+            self.cachedMessages = rm.messages
             print(rm)
         else:
             print(returnreq)
@@ -69,6 +72,11 @@ class Client:
             req = req.encode()
         elif(inp_str == "CMSG"):
             req = CMSG(username)
+            req = req.encode()
+        elif(inp_str == "DMSG"):
+            message_num = input("delete which message number?: ")
+            message_num = int(message_num)
+            req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
             req = req.encode()
         elif(inp_str == "quit"):
             self.getSocket().close()
