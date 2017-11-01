@@ -74,7 +74,7 @@ class Server:
                         if admin ==2:
                             ret = "could not open file"
                         else:
-                            caf = str(ca.getUsername()) + ",1,1,1,1,0,0"
+                            caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
                             perror = self.db.write2("./data/permissionMatrix.txt", str(caf))
                             if perror == 1:
                                 ret = "can't wright to permissions"
@@ -97,7 +97,7 @@ class Server:
                                 return (ret)
                             return(ret)
                     else:
-                        ca = str(ca.getUsername()) + ",1,1,1,1,0,0"
+                        ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
                         error3 = self.db.write2("./data/permissionMatrix.txt", str(ca))
                         if error3 == 0:
                             ret = ("Account created successfully created")
@@ -129,7 +129,7 @@ class Server:
             cm.decode(data)
             if(session.check(cm)):
                 messages = []
-                messages, error = self.db.read(str(cm), str(cm.getUsername()))
+                messages, error = self.db.read(str(cm.getUsername()))
                 rm = RMSG(None, None)
                 a = rm.encode(messages)
                 if error == 0:
@@ -141,7 +141,7 @@ class Server:
             #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
             #parse through the database txt and return all messages with matching recipiant
             return(ret)
-        
+
         elif data[0:4]=="DMSG":
             #create an empty SMSG object to use our decode function to fill in fields
             dobj = DMSG(None, None, None)

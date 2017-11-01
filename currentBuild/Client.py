@@ -27,22 +27,6 @@ class Client:
             print("Connection Error %s" %msg)
             sys.exit(1)
 
-    # def createSocket(self):
-    #     try:
-    #         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #         print("Socket created successfully")
-    #     except socket.error, msg:
-    #         print("Error creating socket: %s" %msg)
-
-    # def connectsock(self):
-    #     try:
-    #         self.getSocket().connect(self.getTCP_PORT, self.getTCP_PORT)
-    #         print("Socket connection valid")
-    #         return self.socket
-    #     except socket.error as msg:
-    #         print("Connection Error %s" %msg)
-    #         sys.exit(1)
-
     def getTCP_IP(self):
         return self.TCP_IP
 
@@ -83,8 +67,8 @@ class Client:
             userupdt = input("which user do you want to update? ")
             #Todo need to check if user exists
             permname = input("what permission do you want to change? ")
-            while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM")):
-                print("Need to input LOGN, RMSG, CMSG, UPDT, or CACM")
+            while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG")):
+                print("Need to input LOGN, RMSG, CMSG, UPDT, CACM, or DMSG")
                 permname = input("what permission do you want to change? ")
             permbool = input("Input change: ")
             while (permbool not in("0","1")):

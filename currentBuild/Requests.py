@@ -68,6 +68,8 @@ class UPDT:
             ret = "5"
         elif Tag == "CACM":
             ret = "6"
+        elif Tag == "DMSG":
+            ret = "7"
         return (ret)
 
     def encode(self, Tag):
