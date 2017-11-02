@@ -65,6 +65,7 @@ class Server:
             ca = CACM(None, None, None)
             ca.decode(data)
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
+            print("pwd2", ca.getPass())
             if error == 0:
                 ret =("Account created successfully")
                 error2 = self.db.write2("./data/logindata.txt", str(ca))
