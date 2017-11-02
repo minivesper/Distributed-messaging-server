@@ -16,17 +16,17 @@ class Database:
             nf = open(fname, "a+")
         return
 
-    def verify(self, fname, username, passwd, permission):
+    def verify(self, fname, username, passwd):
         found = False
         try:
             f = open(fname, 'r')
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username and lparts[1] == passwd and lparts[2][:-1] == permission):
+                    if(lparts[0] == username and lparts[1] == passwd):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
-                print("could not write to file %s"%(e))
+                print("could not read from file %s"%(e))
                 return(False, 1)
             finally:
                 f.close()
@@ -86,13 +86,12 @@ class Database:
                 lparts = line.split(",")
                 for i in range(len(lparts)):
                     if lparts[i] == ouser:
-                        return 0
+                        return True
             print("username does not exist")
-            return 1
+            return False
 
 
     def updateUser(self, fname, username, ouser, tag, perm):
-
         usercha = re.compile(ouser)
         try:
             f = open("./data/copyperm.txt", 'w')
@@ -111,27 +110,6 @@ class Database:
             print("could not open file %s"%(e))
             return(2)
         return(0)
-
-
-    def write2(self, fname, writeText):
-        try:
-            f = open(fname, 'a')
-            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
-                try:
-                    f.write(writeText + "\n")
-                except EXPECTED_EXCEPTION_TYPES as e:
-                    print("could not write to file %s"%(e))
-                    return(1)
-                finally:
-                    f.close()
-            else:
-                print("inbox is full error")
-                return(3)
-        except (IOError, OSError) as e:
-            print("could not open file %s"%(e))
-            return(2)
-        return(0)
-
 
     def write(self,recipient, writeText):
         try:

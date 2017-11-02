@@ -8,17 +8,14 @@ from pprint import pprint
 #cipher = AES.new('5050',AES.MODE_ECB)
 
 class LOGN:
-    def __init__(self,username,passwd,permission):
+    def __init__(self,username,passwd):
         self.username = username
         self.passwd = passwd
-        self.permission = permission
         self.type = "LOGN"
 
     def getUsername(self):
         return self.username
 
-    def getPermis(self):
-        return self.permission
 
     def getPass(self):
         return self.passwd
@@ -27,18 +24,17 @@ class LOGN:
 
     def encode(self):
         sendStr = "LOGN|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis())
+        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass()
         return sendStr
 
     def decode(self, stream):
         s = stream.split("|")
         self.username = s[2]
         self.passwd = s[4]
-        self.permission = s[5]
 
 
     def __repr__(self):
-        return("%s,%s,%s"%(self.getUsername(), self.getPass(), self.getPermis()))
+        return("%s,%s"%(self.getUsername(), self.getPass()))
 
 
 class UPDT:
@@ -78,8 +74,8 @@ class UPDT:
             ret = "7"
         return (ret)
 
-    def encode(self, Tag):
-        tagUp = self.interpretTag(Tag)
+    def encode(self):
+        tagUp = self.interpretTag(self.getTag())
         sendStr = "UPDT|"
         sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getouser())) + "|" + self.getouser()+ "|" + str(len(tagUp)) + "|" + tagUp + "|" + str(len(self.getPerm())) + "|" + self.getPerm()
         return sendStr

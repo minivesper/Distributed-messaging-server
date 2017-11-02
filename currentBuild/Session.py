@@ -16,6 +16,7 @@ class Session:
         self.DMSGp = False
 
     def loginAttempt(self, LOGNreq):
+        ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass(), LOGNreq.getPermis())
         if ver:
             self.username = LOGNreq.getUsername()

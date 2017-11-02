@@ -5,6 +5,7 @@ import getpass
 # import inquirer
 from Requests import *
 from pprint import pprint
+from inputHandle import *
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
@@ -14,6 +15,7 @@ class Client:
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
+        self.ih = inputHandle()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,51 +55,39 @@ class Client:
     def handleCommand(self, inp_str, username):
         req = ""
         if(inp_str == "SMSG"):
-            sendTo = input("who send to: ")
-            msgtxt = input("what send: ")
+            sendTo,msgtxt = self.ih.sendHandle()
             req = SMSG(username, sendTo, msgtxt)
             req = req.encode()
+
         elif(inp_str == "CMSG"):
             req = CMSG(username)
             req = req.encode()
+
         elif(inp_str == "DMSG"):
-            message_num = input("delete which message number?: ")
-            message_num = int(message_num)
-            req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
-            req = req.encode()
+            if(self.cachedMessages == None):
+                self.handleCommand("CMSG",username)
+                self.handleCommand("DMSG",username)
+            else:
+                if(len(self.cachedMessages) != 0):
+                    message_num =self.ih.deleteHandle(self.cachedMessages)
+                    req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
+                    req = req.encode()
+
         elif(inp_str == "UPDT"):
-            userupdt = input("which user do you want to update? ")
-            #Todo need to check if user exists
-            permname = input("what permission do you want to change? ")
-            while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG")):
-                print("Need to input LOGN, RMSG, CMSG, UPDT, CACM, or DMSG")
-                permname = input("what permission do you want to change? ")
-            permbool = input("Input change: ")
-            while (permbool not in("0","1")):
-                print("Need to input 0 or 1")
-                permbool = input("Input change: ")
-            req = UPDT(username, userupdt, permname, permbool)
-            req = req.encode(permname)
+            updts = self.ih.updateHandle()
+            req = UPDT(username, updts[0], updts[1], updts[2])
+            req = req.encode()
+
         elif(inp_str == "QUIT"):
             self.getSocket().close()
             sys.exit(1)
+
         if(req != ""):
             self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
             data = self.getSocket().recv(self.getBUFFER_SIZE())
             self.handleReturn(data.decode())
         else:
             print("%s is not a valid request type"%(inp_str))
-
-    # def recvall(self, sock):
-    #     data=""
-    #     data.encode('utf-8')
-    #     while True:
-    #         part = sock.recv(self.getBUFFER_SIZE())
-    #         print("%s"% part)
-    #         data += part
-    #         if part < self.getBUFFER_SIZE():
-    #             break
-    #     return data
 
     def run(self, currentUsername):
         while True:
@@ -106,16 +96,16 @@ class Client:
 
     def createUser(self):
         user = None
-        inp = input("Welcome: enter command ").upper()
+        inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
-            user, pwd, permission = self.inputCredentials()
+            user = self.inputCredentials()
             return user
         elif inp == "CACM":
-            user, pwd, permission = self.getCredentials()
+            user, pwd, permission = self.hi.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
             return user
         else:
-            print("%s is not a valid request type"%(inp))
+            print("LOGN or CACM dummy! not %s"%(inp))
             return user
 
     def getCredentials(self):
@@ -173,21 +163,16 @@ class Client:
 
     def inputCredentials(self):
         user = input("Username: ")
-        passwd = getpass.getpass("Password for " + user + ":")
-        permission = input("Permission code: ")
-        lreq = LOGN(user,passwd,permission)
+        passwd = getpass.getpass("Password for " + user + ": ")
+        lreq = LOGN(user,passwd)
         lreq = lreq.encode()
         self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
-        if(data.decode() == "not verified"):
-            print(data.decode())
-            user = None
-            return user, passwd, permission,
+        print(data.decode())
+        if(data.decode() == "Not a valid login"):
+            return None
         else:
-            # s = self.getSocket()
-            # data = self.recvall(s)
-            #print(data.decode())
-            return user, passwd, permission
+            return user
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
@@ -213,8 +198,8 @@ class Client:
 
 if __name__ == "__main__":
     c = Client(ADDRESS_OF_SERVER,5005,1024)
-    while True:
+    user = None
+    while not user:
         user = c.createUser()
-        if user:
-            c.run(user)
+    c.run(user)
                 # c.chooseMessage(user)
