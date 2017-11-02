@@ -4,17 +4,19 @@ import select
 from Session import *
 from Requests import *
 from Database import *
+from errHandle import *
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
 
 class Server:
 
     def __init__(self,TCP_IP,TCP_PORT,BUFFER_SIZE):
-        HOST = None
         self.TCP_IP = TCP_IP
         self.TCP_PORT = TCP_PORT
         self.BUFFER_SIZE = BUFFER_SIZE
         self.db = Database()
+        self.e = errHandle()
+
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -46,19 +48,15 @@ class Server:
 
     def handleReq(self, data, session):
         data = data.decode()
-        ret = "no data"
+        ret = "nothing to see here"
+
         if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None, None)
+            lg = LOGN(None, None)
             lg.decode(data)
-            ver = session.loginAttempt(lg)
-            if(ver):
-                ret = ("logged in successfully.")
+            if(session.loginAttempt(lg)):
+                ret = ("logged in successfully")
             else:
-                ver, err = self.db.verify("./data/logindata.txt", lg.getUsername(), lg.getPass(), lg.getPermis())
-                if(ver):
-                    ret = (" logged in successfully.")
-                else:
-                    ret = ("not verified")
+                ret = ("Not a valid login")
             return(ret)
 
         elif data[0:4] == "CACM":
@@ -67,7 +65,7 @@ class Server:
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
             if error == 0:
                 ret =("Account created successfully")
-                error2 = self.db.write2("./data/logindata.txt", str(ca))
+                error2 = self.db.write("logindata", str(ca))
                 if error2 == 0:
                     if ca.getPermis() == "2":
                         admin = self.db.getAdmin("./data/logindata.txt")
@@ -77,9 +75,9 @@ class Server:
                             ret = "could not open file"
                         else:
                             caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                            perror = self.db.write2("./data/permissionMatrix.txt", str(caf))
+                            perror = self.db.write("permissionMatrix", str(caf))
                             if perror == 1:
-                                ret = "can't wright to permissions"
+                                ret = "can't write to permissions"
                             elif perror == 2:
                                 ret = "could not open permissions file"
                             elif perror == 3:
@@ -100,7 +98,7 @@ class Server:
                             return(ret)
                     else:
                         ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                        error3 = self.db.write2("./data/permissionMatrix.txt", str(ca))
+                        error3 = self.db.write("permissionMatrix", str(ca))
                         if error3 == 0:
                             ret = ("Account created successfully created")
                         elif error3 == 1:
@@ -132,78 +130,55 @@ class Server:
             if(session.check(cm)):
                 messages = []
                 messages, error = self.db.read(str(cm.getUsername()))
-                rm = RMSG(None, None)
-                a = rm.encode(messages)
-                if error == 0:
-                    ret = a
-                elif error == 1:
-                    ret = "could not read messages"
-                elif error == 2:
-                    ret = "could not open file"
-            #sm = RMSG(user) //create a recieve message object to send all the stored recpiants messages from server to client
-            #parse through the database txt and return all messages with matching recipiant
+                ret = self.e.read_err(error)
+                if(error == 0):
+                    rm = RMSG(None, None)
+                    ret = rm.encode(messages)
             return(ret)
 
         elif data[0:4]=="DMSG":
-            #create an empty SMSG object to use our decode function to fill in fields
             dobj = DMSG(None, None, None)
             dobj.decode(data)
             if(session.check(dobj)):
                 error = self.db.delete(dobj.getUsername(), str(dobj))
-                if error == 0:
-                    ret = "Message sent successfully"
-                elif error == 1:
-                    ret = "Error in deleting message"
-                elif error == 2:
-                    ret = "File does not exist"
+                ret = self.e.delete_err(error)
             return(ret)
 
         elif data[0:4]=="SMSG":
-            #create an empty SMSG object to use our decode function to fill in fields
             sobj = SMSG(None, None, None)
             sobj.decode(data)
-            uerror = self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())
-            if uerror == 1:
-                ret = "username does not exist"
-                return ret
-            if(session.check(sobj)):
-                error = self.db.write(sobj.getRecipient(), str(sobj))
-                if error == 0:
-                    ret = "Message sent successfully"
-                elif error == 1:
-                    ret = "Error in sending message"
-                elif error == 2:
-                    ret = "File does not exist"
-                elif error == 3:
-                    ret = "This users inbox is full"
-                return(ret)
+            if(self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())):
+                if(session.check(sobj)):
+                    error = self.db.write(sobj.getRecipient(), str(sobj))
+                    ret = self.e.send_err(error)
+                    return(ret)
+                else:
+                    ret = "Session Validation error"
+                    return ret
             else:
-                ret = "you do not have this permission"
-                return ret
+                ret = sobj.getRecipient() + "is not a valid account"
 
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)
             uobj.decode(data)
-            uerror = self.db.checkexistance("./data/permissionMatrix.txt", uobj.getouser())
-            if uerror == 1:
-                ret = "username does not exist"
-                return ret
-            if(session.check(uobj)):
-                error = self.db.updateUser("./data/permissionMatrix.txt", uobj.getUsername(), uobj.getouser(), uobj.getTag(), uobj.getPerm())
-                if error== 0:
-                    ret = "update complete"
-                if error ==1:
-                    ret = "update failed"
-                return ret
+            if(self.db.checkexistance("./data/permissionMatrix.txt", uobj.getouser())):
+                if(session.check(uobj)):
+                    error = self.db.updateUser("./data/permissionMatrix.txt", uobj.getUsername(), uobj.getouser(), uobj.getTag(), uobj.getPerm())
+                    ret = self.e.update_err(error)
+                    return ret
+                else:
+                    ret = "Session Validation Error"
+                    return ret
             else:
-                ret = "You don't have access to this request"
-                return ret
+                ret = uobj.getouser() + "is not a valid account"
+        return(ret)
 
     def run(self):
         print("listening...")
         connected_clients = []
         sessions = []
         while True:
+
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -221,6 +196,7 @@ class Server:
                 pass
 
             else:
+
                 for s in sessions:
                     if s.conn in clients_allowed:
                         data = s.conn.recv(self.getBUFFER_SIZE())
