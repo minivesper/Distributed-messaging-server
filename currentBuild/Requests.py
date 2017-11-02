@@ -20,6 +20,8 @@ class LOGN:
     def getPass(self):
         return self.passwd
 
+
+
     def encode(self):
         sendStr = "LOGN|"
         sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|"+ str(len(self.getPass())) + "|" + self.getPass()
@@ -105,17 +107,65 @@ class CACM:
     def getPermis(self):
         return self.permission
 
+    def addchar(self, string):
+        a =''
+        for i in string:
+            if i == "|":
+                a += ''.join(["\\", i])
+                print(i)
+            elif i == "\\":
+                a += ''.join(["\\", i])
+            elif i == "?":
+                a += ''.join(["\\", i])
+            else:
+                a += i
+        return a
+
     def encode(self):
         sendStr = "CACM|"
-        sendStr += str(len(self.getUsername())) + "|" + self.getUsername() + "|" + str(len(self.getPass())) + "|" + self.getPass() + "|" + str(self.getPermis())
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "?"
+        print("encoded", sendStr)
         return sendStr
 
-    def decode(self, parseStr):
-        parselist = parseStr.split("|")
-        print(parselist)
-        self.username = parselist[2]
-        self.password = parselist[4]
-        self.permission = parselist[5]
+    def removechar(self,string):
+        ret = ""
+        i = 0
+        while i< len(string):
+            if string[i] == "\\":
+                print(string[i])
+                i +=1
+            ret += string[i]
+            i +=1
+        return ret
+
+    def decode(self,parseStr):
+        parselist = []
+        for i in range(len(parseStr)):
+            if parselist:
+                if parseStr[i] == "?":
+                    if parseStr[i-1] != "\\":
+                        parselist.append(parseStr[b+1:])
+                else:
+                    if parseStr[i] == "|":
+                        if parseStr[i-1] != "\\":
+                            parselist.append(parseStr[b+1:i])
+                            b = i
+                        elif parseStr[i-1] == "\\":
+                            if parseStr[i-1] == "\\" and parseStr[i-2] == "\\":
+                                parselist.append(parseStr[b+1:i])
+                                b = i
+            else:
+                if parseStr[i] == "|":
+                    if parseStr[i-1] != "\\":
+                        parselist.append(parseStr[0:i])
+                        b=i
+        i = 0
+        while i< len(parselist):
+            parselist[i] = self.removechar(parselist[i])
+            i +=1
+        self.username = parselist[1]
+        self.password = parselist[2]
+        self.permission = parselist[3]
 
     #def encrypt(self,string):
     #    encrypted_string = base64.b64encode(cipher.encrypt(string))
