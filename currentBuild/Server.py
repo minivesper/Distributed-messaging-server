@@ -53,7 +53,6 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            print(lg)
             if(session.loginAttempt(lg)):
                 ret = ("logged in successfully")
             else:
@@ -158,7 +157,7 @@ class Server:
                     ret = "Session Validation error"
                     return ret
             else:
-                ret = sobj.getRecipient() + "is not a valid account"
+                ret = sobj.getRecipient() + " is not a valid account"
 
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)

@@ -55,7 +55,8 @@ class LOGN(Request):
     def decode(self, stream):
         writes = 0
         stream_item = ""
-        for c in range(5,len(stream)):
+        c = 5
+        while c  < len(stream):
             if stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
@@ -72,6 +73,7 @@ class LOGN(Request):
                     return
             else:
                 stream_item += stream[c]
+            c=c+1
 
     def __repr__(self):
         return("%s,%s"%(self.getUsername(), self.getPass()))
@@ -119,7 +121,8 @@ class UPDT(Request):
     def decode(self, stream):
         writes = 0
         stream_item = ""
-        for c in range(5,len(stream)):
+        c = 5
+        while c  < len(stream):
             if stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
@@ -144,6 +147,7 @@ class UPDT(Request):
                     return
             else:
                 stream_item += stream[c]
+            c=c+1
 
     def __repr__(self):
         return("%s, %s, %s, %s"%(self.getUsername(), self.getouser(), self.getTag(), self.getPermis()))
@@ -232,7 +236,8 @@ class SMSG(Request):
     def decode(self, stream):
         writes = 0
         stream_item = ""
-        for c in range(5,len(stream)):
+        c = 5
+        while c  < len(stream):
             if stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
@@ -253,7 +258,7 @@ class SMSG(Request):
                     return
             else:
                 stream_item += stream[c]
-
+            c=c+1
 #    def encrypt(self,string):
 #        encrypted_string = base64.b64encode(cipher.encrypt(string))
 #        return encrypted_string
@@ -291,7 +296,7 @@ class RMSG(Request):
         for m in messages:
             sm = m.split(",")
             for s in sm:
-                beg += "|" + str(len(s)) + "|" + str(s)
+                beg += "|" + self.addchar(str(s))
         return beg
 
     def decode(self, messages):
@@ -339,7 +344,8 @@ class DMSG(Request):
     def decode(self, stream):
         writes = 0
         stream_item = ""
-        for c in range(5,len(stream)):
+        c = 5
+        while c  < len(stream):
             if stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
@@ -360,6 +366,7 @@ class DMSG(Request):
                     return
             else:
                 stream_item += stream[c]
+            c=c+1
 
     def getUsername(self):
         return self.username
@@ -385,7 +392,8 @@ class CMSG(Request):
     def decode(self,stream):
         writes = 0
         stream_item = ""
-        for c in range(5,len(stream)):
+        c = 5
+        while c  < len(stream):
             if stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
@@ -398,7 +406,7 @@ class CMSG(Request):
                     return
             else:
                 stream_item += stream[c]
-
+            c=c+1
     #def encrypt(self,string):
     #    encrypted_string = base64.b64encode(cipher.encrypt(string))
     #    return encrypted_string
