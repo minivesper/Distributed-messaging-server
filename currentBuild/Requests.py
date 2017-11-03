@@ -297,25 +297,41 @@ class RMSG(Request):
             sm = m.split(",")
             for s in sm:
                 beg += "|" + self.addchar(str(s))
+        beg += "?"
         return beg
 
-    def decode(self, messages):
+    def decode(self, stream):
+        print(stream)
         write_messages = []
         single_message = []
-        messages = messages.split("|")
-        messages = messages[2:]
-        for i in range(len(messages)):
-            if i%6 == 3:
-                single_message.append(messages[i])
-            elif i%6 == 5:
-                single_message.append(messages[i])
-            elif i%6 == 1:
-                single_message.append(messages[i])
-            if(len(single_message) == 3):
-                write_messages.append(single_message)
-                single_message = []
-        self.messages = write_messages
-
+        writes = 0
+        stream_item = ""
+        c = 7
+        while c  < len(stream):
+            if stream[c] == "\\":
+                stream_item += stream[c+1]
+                c=c+1
+            elif stream[c] == "|" or stream[c] == "?":
+                if writes == 0:
+                    single_message.append(stream_item)
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    single_message.append(stream_item)
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 2:
+                    single_message.append(stream_item)
+                    write_messages.append(single_message)
+                    single_message = []
+                    stream_item = ""
+                    writes=0
+                if stream[c] == "?":
+                    self.messages = write_messages
+                    return
+            else:
+                stream_item += stream[c]
+            c=c+1
 #    def encrypt(self,string):
 #        encrypted_string = base64.b64encode(cipher.encrypt(string))
 #        return encrypted_string
