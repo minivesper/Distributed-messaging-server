@@ -63,68 +63,100 @@ class Server:
             ca = CACM(None, None, None)
             ca.decode(data)
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
-            print("pwd2", ca.getPass())
+            ret = self.e.duplicate_err(error)
             if error == 0:
-                ret =("Account created successfully")
                 error2 = self.db.write("logindata", str(ca))
+                ret = self.e.send_err(error2) #right now if 0, ret will be "message sent successfully". Not just "wrote user"
                 if error2 == 0:
                     if ca.getPermis() == "2":
-                        admin = self.db.getAdmin("./data/logindata.txt")
-                        if admin == 1:
-                            ret = "could not read file to get admin"
-                        if admin ==2:
-                            ret = "could not open file"
-                        else:
-                            caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                            perror = self.db.write("permissionMatrix", str(caf))
-                            if perror == 1:
-                                ret = "can't write to permissions"
-                            elif perror == 2:
-                                ret = "could not open permissions file"
-                            elif perror == 3:
-                                ret = "permission file full"
-                            elif perror == 0:
-                                for a in admin:
+                        print("the user has permissions #2")
+                        error3 = self.db.getAdmin("./data/logindata.txt")
+                        ret = self.e.admin_err(error3)
+                        print(error3)
+                        if error3:
+
+                            wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                            error4 = self.db.write("permissionMatrix", str(wperm))
+                            ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
+                            if error4 == 0:
+                                for a in error3: #error3 should be a list of all admins
                                     data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
-                                    error = self.db.write(a, data)
-                                    if error == 0:
-                                        ret = "Message sent to admin"
-                                    elif error == 1:
-                                        ret = "Error in sending message to admin"
-                                    elif error == 2:
-                                        ret = "File does not exist"
-                                    elif error == 3:
-                                        ret = "Admin's userbox is full"
+                                    error5 = self.db.write(a, data)
+                                    ret = self.e.send_err(error5) #again might want to new function to print differnt string about admin (like sent message to admin instead of successfully sent)
                                 return (ret)
                             return(ret)
                     else:
                         ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                        error3 = self.db.write("permissionMatrix", str(ca))
-                        if error3 == 0:
-                            ret = ("Account created successfully created")
-                        elif error3 == 1:
-                            ret = "Error in writing permissions message"
-                        elif error3 == 2:
-                            ret = "File does not exist"
-                        elif error3 == 3:
-                            ret = ("permission matrix is full")
+                        error7 = self.db.write("permissionMatrix", str(ca))
+                        ret = self.e.send_err(error7) #again change string print out?
                         return (ret)
-                elif error2 == 1:
-                    ret = "Error in sending message to admin"
-                elif error2 == 2:
-                    ret = "File does not exist"
-                elif error2 == 3:
-                    ret = "Admin's userbox is full"
                 return (ret)
-            elif error == 1:
-                ret = ("Error in sending message")
-            elif error == 2:
-                ret = "File does not exist"
-            elif error == 3:
-                ret = ("username already exists, please enter a new username")
-                print("ret",ret)
             return(ret)
 
+
+        # ca = CACM(None, None, None)
+        # ca.decode(data)
+        # error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
+        # if error == 0:
+        #     ret =("Account created successfully")
+        #     error2 = self.db.write("logindata", str(ca))
+        #     if error2 == 0:
+        #         if ca.getPermis() == "2":
+        #             admin = self.db.getAdmin("./data/logindata.txt")
+        #             if admin == 1:
+        #                 ret = "could not read file to get admin"
+        #             if admin ==2:
+        #                 ret = "could not open file"
+        #             else:
+        #                 caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+        #                 perror = self.db.write("permissionMatrix", str(caf))
+        #                 if perror == 1:
+        #                     ret = "can't write to permissions"
+        #                 elif perror == 2:
+        #                     ret = "could not open permissions file"
+        #                 elif perror == 3:
+        #                     ret = "permission file full"
+        #                 elif perror == 0:
+        #                     for a in admin:
+        #                         data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
+        #                         error = self.db.write(a, data)
+        #                         if error == 0:
+        #                             ret = "Message sent to admin"
+        #                         elif error == 1:
+        #                             ret = "Error in sending message to admin"
+        #                         elif error == 2:
+        #                             ret = "File does not exist"
+        #                         elif error == 3:
+        #                             ret = "Admin's userbox is full"
+        #                     return (ret)
+        #                 return(ret)
+        #         else:
+        #             ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+        #             error3 = self.db.write("permissionMatrix", str(ca))
+        #             if error3 == 0:
+        #                 ret = ("Account created successfully created")
+        #             elif error3 == 1:
+        #                 ret = "Error in writing permissions message"
+        #             elif error3 == 2:
+        #                 ret = "File does not exist"
+        #             elif error3 == 3:
+        #                 ret = ("permission matrix is full")
+        #             return (ret)
+        #     elif error2 == 1:
+        #         ret = "Error in sending message to admin"
+        #     elif error2 == 2:
+        #         ret = "File does not exist"
+        #     elif error2 == 3:
+        #         ret = "Admin's userbox is full"
+        #     return (ret)
+        # elif error == 1:
+        #     ret = ("Error in sending message")
+        # elif error == 2:
+        #     ret = "File does not exist"
+        # elif error == 3:
+        #     ret = ("username already exists, please enter a new username")
+        #     print("ret",ret)
+        # return(ret)
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
             cm.decode(data)

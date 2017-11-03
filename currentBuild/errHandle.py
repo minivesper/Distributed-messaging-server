@@ -10,6 +10,7 @@ class errHandle:
         elif code == 2:
             return "File does not exist"
 
+
     def send_err(self,code):
         if code == 0:
             return "Message sent successfully"
@@ -37,3 +38,20 @@ class errHandle:
             return "file read error"
         if code == 2:
             return "file open error"
+
+    def admin_err(self,code):
+        if code == 1:
+            return "could not read from file"
+        if code == 2:
+            return "could not open file"
+        else:
+            return code
+    def duplicate_err(self,code):
+        if code == 0:
+            return "Account created successfully"
+        if code ==1:
+            return "could not read from file"
+        if code ==2:
+            return "could not open file"
+        if code ==3:
+            return "username already exists"
