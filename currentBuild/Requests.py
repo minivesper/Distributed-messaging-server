@@ -32,12 +32,15 @@ class Request:
         ret = ""
         i = 0
         while i< len(string):
+            if string[i] == "?":
+                if string[i-1] != "\\":
+                    return ret
             if string[i] == "\\":
-                print(string[i])
                 i +=1
             ret += string[i]
             i +=1
         return ret
+
 
 class LOGN(Request):
     def __init__(self,username,passwd):
@@ -168,19 +171,6 @@ class CACM(Request):
         sendStr = "CACM|"
         sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "?"
         return sendStr
-
-    def removechar(self,string):
-        ret = ""
-        i = 0
-        while i< len(string):
-            if string[i] == "?":
-                if string[i-1] != "\\":
-                    return ret
-            if string[i] == "\\":
-                i +=1
-            ret += string[i]
-            i +=1
-        return ret
 
     def decode(self,parseStr):
         parselist = []
