@@ -43,13 +43,13 @@ class Session:
     def check(self, data):
         if not self.loggedin:
             return False
-        if(self.SMSGp == "1" and data.type == "SMSG" and data.Username == self.username):
+        if(self.SMSGp == "1" and data.type == "SMSG" and data.username == self.username):
             return True
-        if(self.CMSGp == "1" and data.type == "CMSG" and data.Username == self.username):
+        if(self.CMSGp == "1" and data.type == "CMSG" and data.username == self.username):
             return True
-        if(self.DMSGp == "1" and data.type == "DMSG" and data.Username == self.username):
+        if(self.DMSGp == "1" and data.type == "DMSG" and data.username == self.username):
             return True
-        if(self.UPDTp == "1" and data.type == "UPDT" and data.Username == self.username):
+        if(self.UPDTp == "1" and data.type == "UPDT" and data.username == self.username):
             return True
         else:
             return False

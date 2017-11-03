@@ -53,6 +53,7 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
+            print(lg)
             if(session.loginAttempt(lg)):
                 ret = ("logged in successfully")
             else:

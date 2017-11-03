@@ -101,7 +101,7 @@ class Client:
             user = self.inputCredentials()
             return user
         elif inp == "CACM":
-            user, pwd, permission = self.hi.getCredentials()
+            user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
             return user
         else:
