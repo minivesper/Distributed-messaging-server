@@ -55,7 +55,6 @@ class Database:
         except (IOError, OSError) as e:
            print("could not open file %s"%(e))
            return 2
-        print(adminusers)
         return adminusers
 
     def checkDuplicate(self, fname, username):
@@ -67,7 +66,6 @@ class Database:
                    for line in infile:
                        lparts = line.split(",")
                        if(lparts[0] == username):
-                           print(username)
                            print("username already exists")
                            return 3
            except IOError as e:
@@ -103,7 +101,6 @@ class Database:
                         found = usercha.search(lparts[i])
                         if found:
                             lparts[int(tag)] = perm
-                    print("lpart", lparts[i])
                     f.write(",".join(lparts))
                 dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
         except (IOError, OSError) as e:

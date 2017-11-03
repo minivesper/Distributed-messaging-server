@@ -1,3 +1,6 @@
+import re
+import getpass
+
 class inputHandle:
     def __init__(self):
         return

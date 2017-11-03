@@ -92,14 +92,21 @@ if __name__ == "__main__":
 
 #CACM|\\i\\i\||/|ll
 #print(decode(a))
-b = input("Enter string: ")
-print("b",b)
-a = (addchar(b))
-print("a",a)
-d = (decode(a))
-print("d",d)
-f = (removechar(d))
-print("f",f)
+
+    def removechar(string):
+        ret = ""
+        i = 0
+        while i< len(string):
+            if string[i] == "?":
+                if string[i-1] != "\\":
+                    return ret
+            elif string[i] == "\\":
+                i +=1
+            ret += string[i]
+            i +=1
+        return ret
+
+print(removechar("2?"))
 
 
 

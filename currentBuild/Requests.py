@@ -112,7 +112,6 @@ class CACM:
         for i in string:
             if i == "|":
                 a += ''.join(["\\", i])
-                print(i)
             elif i == "\\":
                 a += ''.join(["\\", i])
             elif i == "?":
@@ -124,15 +123,16 @@ class CACM:
     def encode(self):
         sendStr = "CACM|"
         sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "?"
-        print("encoded", sendStr)
         return sendStr
 
     def removechar(self,string):
         ret = ""
         i = 0
         while i< len(string):
+            if string[i] == "?":
+                if string[i-1] != "\\":
+                    return ret
             if string[i] == "\\":
-                print(string[i])
                 i +=1
             ret += string[i]
             i +=1
@@ -160,6 +160,7 @@ class CACM:
                         parselist.append(parseStr[0:i])
                         b=i
         i = 0
+        print(parselist)
         while i< len(parselist):
             parselist[i] = self.removechar(parselist[i])
             i +=1
