@@ -43,7 +43,6 @@ class Request:
             i +=1
         return ret
 
-
 class LOGN(Request):
     def __init__(self,username,passwd):
         Request.__init__(self,username,"LOGN")
