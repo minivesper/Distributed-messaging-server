@@ -114,6 +114,7 @@ class Database:
             f = open(fname, 'a')
             if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
                 try:
+                    print("writeText", writeText)
                     f.write(writeText + "\n")
                 except EXPECTED_EXCEPTION_TYPES as e:
                     print("could not write to file %s"%(e))

@@ -24,6 +24,8 @@ class Request:
                 a += ''.join(["\\", i])
             elif i == "?":
                 a += ''.join(["\\", i])
+            elif i == ",":
+                a += ''.join(["\\", i])
             else:
                 a += i
         return a
@@ -230,7 +232,10 @@ class SMSG(Request):
         stream_item = ""
         c = 5
         while c  < len(stream):
-            if stream[c] == "\\":
+            if stream[c] == "\\" and stream[c+1] == ",":
+                stream_item += stream[c] + stream[c+1]
+                c = c+1
+            elif stream[c] == "\\":
                 stream_item += stream[c+1]
                 c=c+1
             elif stream[c] == "|" or stream[c] == "?":
@@ -282,18 +287,34 @@ class RMSG(Request):
         return self.messages
 
     def encode(self, messages):
+        smessages=[]
+        stringp =""
         lenall = str(len(messages))
         sendstr = "RMSG|"
         beg = sendstr + lenall
         for m in messages:
-            sm = m.split(",")
-            for s in sm:
+            i = 0
+            smessages= []
+            while i < len(m):
+                if i == len(m)-1:
+                    stringp+=m[i]
+                    smessages.append(stringp)
+                    stringp = ""
+                elif m[i] == "\\" and m[i+1] == ",":
+                    stringp += m[i+1]
+                    i = i+1
+                elif m[i] == ",":
+                    smessages.append(stringp)
+                    stringp = ""
+                else:
+                    stringp += m[i]
+                i = i+1
+            for s in smessages:
                 beg += "|" + self.addchar(str(s))
         beg += "?"
         return beg
 
     def decode(self, stream):
-        print(stream)
         write_messages = []
         single_message = []
         writes = 0
@@ -324,6 +345,7 @@ class RMSG(Request):
             else:
                 stream_item += stream[c]
             c=c+1
+
 #    def encrypt(self,string):
 #        encrypted_string = base64.b64encode(cipher.encrypt(string))
 #        return encrypted_string
