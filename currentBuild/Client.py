@@ -113,9 +113,13 @@ class Client:
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        lreq = CACM(user,pwd,permission)
-        lreq= lreq.encode()
         cry = Crypt()
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        pwd = cry.hashpwd(userb,pwdb)
+        lreq = CACM(user,str(pwd),permission)
+        lreq= lreq.encode()
+        print("pwd",str(pwd))
         lreq = cry.encryptit(lreq)
         self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
@@ -133,11 +137,14 @@ class Client:
             return user
 
     def inputCredentials(self):
-        user = input("Username: ")
-        passwd = getpass.getpass("Password for " + user + ": ")
-        lreq = LOGN(user,passwd)
-        lreq = lreq.encode()
         cry = Crypt()
+        user = input("Username: ")
+        pwd = getpass.getpass("Password for " + user + ": ")
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        pwd = cry.hashpwd(userb,pwdb)
+        lreq = LOGN(user,str(pwd))
+        lreq = lreq.encode()
         lreq = cry.encryptit(lreq)
         self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
