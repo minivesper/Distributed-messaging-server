@@ -4,6 +4,7 @@ import select
 from Session import *
 from Requests import *
 from Database import *
+from Crypt import *
 from errHandle import *
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
@@ -234,8 +235,11 @@ class Server:
                     if s.conn in clients_allowed:
                         data = s.conn.recv(self.getBUFFER_SIZE())
                         if data:
+                            cry = Crypt()
+                            data = cry.decryptit(data)
                             ret_data = self.handleReq(data, s)
-                            s.conn.send(ret_data.encode())
+                            ret_data = cry.encryptit(ret_data)
+                            s.conn.send(ret_data)
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             connected_clients.remove(s.conn)

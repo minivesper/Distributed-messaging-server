@@ -4,6 +4,7 @@ import base64
 # import inquirer
 #from Crypto.Cipher import AES
 from pprint import pprint
+from Crypt import *
 
 # cipher = AES.new('5050',AES.MODE_ECB)
 class Request:
