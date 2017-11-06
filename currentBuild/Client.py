@@ -3,6 +3,7 @@ import sys
 import re
 import getpass
 # import inquirer
+from Crypt import *
 from Requests import *
 from pprint import pprint
 
@@ -82,8 +83,11 @@ class Client:
             self.getSocket().close()
             sys.exit(1)
         if(req != ""):
-            self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+            cry = Crypt()
+            req = cry.encryptit(req)
+            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
             data = self.getSocket().recv(self.getBUFFER_SIZE())
+            data = cry.decryptit(data)
             self.handleReturn(data.decode())
         else:
             print("%s is not a valid request type"%(inp_str))
@@ -156,8 +160,11 @@ class Client:
     def checkCredentials(self, user, pwd, permission):
         lreq = CACM(user,pwd,permission)
         lreq= lreq.encode()
-        self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+        cry = Crypt()
+        lreq = cry.encryptit(lreq)
+        self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
+        data = cry.decryptit(data)
         if(data.decode() == "username already exists, please enter a new username"):
             print(data.decode())
             user = self.createUser()
@@ -176,8 +183,11 @@ class Client:
         permission = input("Permission code: ")
         lreq = LOGN(user,passwd,permission)
         lreq = lreq.encode()
-        self.getSocket().sendto(lreq.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+        cry = Crypt()
+        lreq = cry.encryptit(lreq)
+        self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
+        data = cry.decryptit(data)
         if(data.decode() == "not verified"):
             print(data.decode())
             user = None
