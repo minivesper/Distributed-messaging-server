@@ -47,7 +47,9 @@ class Session:
             return True
         if(self.CMSGp == "1" and data.type == "CMSG" and data.username == self.username):
             return True
+        print(data.username == self.username)
         if(self.DMSGp == "1" and data.type == "DMSG" and data.username == self.username):
+            print("boop")
             return True
         if(self.UPDTp == "1" and data.type == "UPDT" and data.username == self.username):
             return True
