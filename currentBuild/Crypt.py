@@ -4,6 +4,10 @@ import base64
 from cryptography.fernet import Fernet
 #from Crypto.Cipher import AES
 from pprint import pprint
+import base64
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 key = "qgIbhaErnQ7jntxVgEVo5ReNKFZEASe-TTAh3Q8-uZU="
 #key = Fernet.generate_key()
@@ -16,6 +20,13 @@ cipher_key = Fernet(key)
 class Crypt:
     def __init__(self):
         return
+
+    def hashpwd(self, salt, password):
+        kdf = PBKDF2HMAC(algorithm = hashes.SHA256(), length = 32, salt = salt, iterations = 100000, backend = default_backend())
+        hashp = base64.urlsafe_b64encode(kdf.derive(password))
+        return hashp
+
+
 
     def encryptit(self,string):
         string = string.encode('utf-8')

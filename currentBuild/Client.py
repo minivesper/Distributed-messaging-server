@@ -147,9 +147,13 @@ class Client:
             return user
 
     def inputCredentials(self):
+        cry = Crypt()
         user = input("Username: ")
-        passwd = getpass.getpass("Password for " + user + ": ")
-        lreq = LOGN(user,passwd)
+        pwd = getpass.getpass("Password for " + user + ": ")
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        pwd = cry.hashpwd(userb,pwdb)
+        lreq = LOGN(user,str(pwd))
         lreq = lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
