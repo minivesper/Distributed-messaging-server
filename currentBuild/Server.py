@@ -47,17 +47,34 @@ class Server:
     def getSocket(self):
         return self.socket
 
+    def sendAll(self,reqstr,connection,buffsize):
+        cry = Crypt()
+        req = cry.encryptit(reqstr)
+        connection.send((len(req)).to_bytes(4,'little'))
+        connection.send(req)
+
+    def recieveAll(self,connection,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = connection.recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(connection.recv(self.getBUFFER_SIZE()))
+        print(data)
+        retdata = cry.decryptit(bytes(data)).decode()
+        return retdata
+
     def handleReq(self, data, session):
-        data = data.decode()
         ret = "nothing to see here"
 
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
             if(session.loginAttempt(lg)):
-                ret = ("logged in successfully")
+                ret = ("logged in successfully?")
             else:
-                ret = ("Not a valid login")
+                ret = ("Not a valid login?")
             return(ret)
 
         elif data[0:4] == "CACM":
@@ -94,70 +111,6 @@ class Server:
                 return (ret)
             return(ret)
 
-
-        # ca = CACM(None, None, None)
-        # ca.decode(data)
-        # error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
-        # if error == 0:
-        #     ret =("Account created successfully")
-        #     error2 = self.db.write("logindata", str(ca))
-        #     if error2 == 0:
-        #         if ca.getPermis() == "2":
-        #             admin = self.db.getAdmin("./data/logindata.txt")
-        #             if admin == 1:
-        #                 ret = "could not read file to get admin"
-        #             if admin ==2:
-        #                 ret = "could not open file"
-        #             else:
-        #                 caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-        #                 perror = self.db.write("permissionMatrix", str(caf))
-        #                 if perror == 1:
-        #                     ret = "can't write to permissions"
-        #                 elif perror == 2:
-        #                     ret = "could not open permissions file"
-        #                 elif perror == 3:
-        #                     ret = "permission file full"
-        #                 elif perror == 0:
-        #                     for a in admin:
-        #                         data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
-        #                         error = self.db.write(a, data)
-        #                         if error == 0:
-        #                             ret = "Message sent to admin"
-        #                         elif error == 1:
-        #                             ret = "Error in sending message to admin"
-        #                         elif error == 2:
-        #                             ret = "File does not exist"
-        #                         elif error == 3:
-        #                             ret = "Admin's userbox is full"
-        #                     return (ret)
-        #                 return(ret)
-        #         else:
-        #             ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-        #             error3 = self.db.write("permissionMatrix", str(ca))
-        #             if error3 == 0:
-        #                 ret = ("Account created successfully created")
-        #             elif error3 == 1:
-        #                 ret = "Error in writing permissions message"
-        #             elif error3 == 2:
-        #                 ret = "File does not exist"
-        #             elif error3 == 3:
-        #                 ret = ("permission matrix is full")
-        #             return (ret)
-        #     elif error2 == 1:
-        #         ret = "Error in sending message to admin"
-        #     elif error2 == 2:
-        #         ret = "File does not exist"
-        #     elif error2 == 3:
-        #         ret = "Admin's userbox is full"
-        #     return (ret)
-        # elif error == 1:
-        #     ret = ("Error in sending message")
-        # elif error == 2:
-        #     ret = "File does not exist"
-        # elif error == 3:
-        #     ret = ("username already exists, please enter a new username")
-        #     print("ret",ret)
-        # return(ret)
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
             cm.decode(data)
@@ -173,6 +126,7 @@ class Server:
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
+            print(dobj)
             if(session.check(dobj)):
                 error = self.db.delete(dobj.getUsername(), str(dobj))
                 ret = self.e.delete_err(error)
@@ -187,10 +141,10 @@ class Server:
                     ret = self.e.send_err(error)
                     return(ret)
                 else:
-                    ret = "Session Validation error"
+                    ret = "Session Validation error?"
                     return ret
             else:
-                ret = sobj.getRecipient() + " is not a valid account"
+                ret = sobj.getRecipient() + " is not a valid account?"
 
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)
@@ -201,10 +155,10 @@ class Server:
                     ret = self.e.update_err(error)
                     return ret
                 else:
-                    ret = "Session Validation Error"
+                    ret = "Session Validation Error?"
                     return ret
             else:
-                ret = uobj.getouser() + "is not a valid account"
+                ret = uobj.getouser() + "is not a valid account?"
         return(ret)
 
     def run(self):
@@ -233,13 +187,11 @@ class Server:
 
                 for s in sessions:
                     if s.conn in clients_allowed:
-                        data = s.conn.recv(self.getBUFFER_SIZE())
+                        data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             cry = Crypt()
-                            data = cry.decryptit(data)
                             ret_data = self.handleReq(data, s)
-                            ret_data = cry.encryptit(ret_data)
-                            s.conn.send(ret_data)
+                            self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             connected_clients.remove(s.conn)

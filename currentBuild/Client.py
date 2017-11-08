@@ -53,6 +53,25 @@ class Client:
         else:
             print(returnreq)
 
+    def sendAll(self,reqstr,buffsize):
+        cry = Crypt()
+        req = cry.encryptit(reqstr)
+        print("send len: ", len(req))
+        self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+        self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+
+    def recieveAll(self,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = self.getSocket().recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+        print(data)
+        retdata = cry.decryptit(bytes(data)).decode()
+        return retdata
+
     def handleCommand(self, inp_str, username):
         req = ""
         if(inp_str == "SMSG"):
@@ -71,7 +90,7 @@ class Client:
             else:
                 if(len(self.cachedMessages) != 0):
                     message_num =self.ih.deleteHandle(self.cachedMessages)
-                    req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
+                    req = DMSG(self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][2])
                     req = req.encode()
 
         elif(inp_str == "UPDT"):
@@ -84,12 +103,10 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            cry = Crypt()
-            req = cry.encryptit(req)
-            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
-            data = self.getSocket().recv(self.getBUFFER_SIZE())
-            data = cry.decryptit(data)
-            self.handleReturn(data.decode())
+            self.sendAll(req,self.getBUFFER_SIZE())
+            data = self.recieveAll(self.getBUFFER_SIZE())
+            print("data: ", data)
+            self.handleReturn(data)
         else:
             print("%s is not a valid request type"%(inp_str))
 
@@ -115,13 +132,10 @@ class Client:
     def checkCredentials(self, user, pwd, permission):
         lreq = CACM(user,pwd,permission)
         lreq= lreq.encode()
-        cry = Crypt()
-        lreq = cry.encryptit(lreq)
-        self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        data = cry.decryptit(data)
-        if(data.decode() == "username already exists, please enter a new username"):
-            print(data.decode())
+        self.sendAll(lreq,self.getBUFFER_SIZE())
+        data = self.recieveAll(self.getBUFFER_SIZE())
+        if(data == "username already exists, please enter a new username"):
+            print(data)
             user = self.createUser()
             return
         if permission == "2":
@@ -137,13 +151,10 @@ class Client:
         passwd = getpass.getpass("Password for " + user + ": ")
         lreq = LOGN(user,passwd)
         lreq = lreq.encode()
-        cry = Crypt()
-        lreq = cry.encryptit(lreq)
-        self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        data = cry.decryptit(data)
-        print(data.decode())
-        if(data.decode() == "Not a valid login"):
+        self.sendAll(lreq,self.getBUFFER_SIZE())
+        data = self.recieveAll(self.getBUFFER_SIZE())
+        print(data)
+        if(data == "Not a valid login?"):
             return None
         else:
             return user
