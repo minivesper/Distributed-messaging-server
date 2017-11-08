@@ -58,10 +58,10 @@ class Server:
         cry = Crypt()
         data = bytearray()
         packetsize = connection.recv(4)
-        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        if int.from_bytes(packetsize,'little') == 0:
+            return None
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
             data.extend(connection.recv(self.getBUFFER_SIZE()))
-        print(data)
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 

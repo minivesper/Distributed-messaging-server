@@ -56,7 +56,6 @@ class Client:
     def sendAll(self,reqstr,buffsize):
         cry = Crypt()
         req = cry.encryptit(reqstr)
-        print("send len: ", len(req))
         self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
         self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
 
@@ -65,10 +64,8 @@ class Client:
         cry = Crypt()
         data = bytearray()
         packetsize = self.getSocket().recv(4)
-        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
             data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
-        print(data)
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
@@ -105,7 +102,6 @@ class Client:
         if(req != ""):
             self.sendAll(req,self.getBUFFER_SIZE())
             data = self.recieveAll(self.getBUFFER_SIZE())
-            print("data: ", data)
             self.handleReturn(data)
         else:
             print("%s is not a valid request type"%(inp_str))
@@ -130,20 +126,24 @@ class Client:
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        lreq = CACM(user,pwd,permission)
+        cry = Crypt()
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        pwd = cry.hashpwd(userb,pwdb)
+        lreq = CACM(user,str(pwd),permission)
         lreq= lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
         if(data == "username already exists, please enter a new username"):
             print(data)
             user = self.createUser()
-            return
+            return None
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
             sys.exit(1)
             return user
         else:
-            print(data.decode())
+            print(data)
             return user
 
     def inputCredentials(self):
