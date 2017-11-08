@@ -26,8 +26,6 @@ class Crypt:
         hashp = base64.urlsafe_b64encode(kdf.derive(password))
         return hashp
 
-
-
     def encryptit(self,string):
         string = string.encode('utf-8')
         ciphertext = cipher_key.encrypt(string)

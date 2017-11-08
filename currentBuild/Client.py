@@ -119,7 +119,6 @@ class Client:
         pwd = cry.hashpwd(userb,pwdb)
         lreq = CACM(user,str(pwd),permission)
         lreq= lreq.encode()
-        print("pwd",str(pwd))
         lreq = cry.encryptit(lreq)
         self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
         data = self.getSocket().recv(self.getBUFFER_SIZE())
@@ -178,7 +177,7 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-    c = Client(ADDRESS_OF_SERVER,5005,1024)
+    c = Client(ADDRESS_OF_SERVER,5000,1024)
     user = None
     while not user:
         user = c.createUser()
