@@ -47,24 +47,24 @@ class inputHandle:
                 user = input("Username: ")
         print("Please create a password")
         pwd = getpass.getpass("Password for " + user + ":")
-        while(len(pwd))<8:
-            print("Password needs to be a minimum of 8 characters")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(len(pwd))>15:
-            print("Password needs to be a max of 15 characters")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[a-z]", pwd)) is None:
-            print("Password needs to contain 1 lowercase value")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[A-Z]", pwd)) is None:
-            print("Password needs to contain 1 uppercase value")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[0-9]", pwd)) is None:
-            print("Password needs to contain 1 number")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[!@#$%^&*]", pwd)) is None:
-            print("Password needs to contain a special character (!@#$%^&*)")
-            pwd = getpass.getpass("Password for " + user + ":")
+        # while(len(pwd))<8:
+        #     print("Password needs to be a minimum of 8 characters")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(len(pwd))>15:
+        #     print("Password needs to be a max of 15 characters")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[a-z]", pwd)) is None:
+        #     print("Password needs to contain 1 lowercase value")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[A-Z]", pwd)) is None:
+        #     print("Password needs to contain 1 uppercase value")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[0-9]", pwd)) is None:
+        #     print("Password needs to contain 1 number")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[!@#$%^&*]", pwd)) is None:
+        #     print("Password needs to contain a special character (!@#$%^&*)")
+        #     pwd = getpass.getpass("Password for " + user + ":")
         permission = input("Permission code: ")
         while permission != "1" and permission != "2":
             print("Permission code needs to be 1 for member or 2 for admin access")

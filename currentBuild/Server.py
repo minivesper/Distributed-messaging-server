@@ -55,6 +55,7 @@ class Server:
             lg = LOGN(None, None)
             lg.decode(data)
             if(session.loginAttempt(lg)):
+                print("logged in successfully")
                 ret = ("logged in successfully")
             else:
                 ret = ("Not a valid login")
