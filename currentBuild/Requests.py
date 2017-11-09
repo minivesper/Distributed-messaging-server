@@ -355,11 +355,15 @@ class RMSG(Request):
 #        return decrypted_string
 
     def __repr__(self):
-        printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
-        for m in self.messages:
-            singlestr = "MSG#" + str(self.messages.index(m)+1) +"\n"+ "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
-            printstr += singlestr
-        return printstr
+        nomessages = "You have no messages"
+        if self.messages == None:
+            return nomessages
+        else:
+            printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
+            for m in self.messages:
+                singlestr = "MSG#" + str(self.messages.index(m)+1) +"\n"+ "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
+                printstr += singlestr
+            return printstr
 
 class DMSG(Request):
 

@@ -58,6 +58,8 @@ class Server:
         cry = Crypt()
         data = bytearray()
         packetsize = connection.recv(4)
+        if int.from_bytes(packetsize, 'little') ==0:
+            return None
         print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
             data.extend(connection.recv(self.getBUFFER_SIZE()))
@@ -114,6 +116,10 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
+            print("data", data)
+            print(data[6])
+            if data[6] == None:
+                ret = "No messages"
             cm.decode(data)
             if(session.check(cm)):
                 messages = []
@@ -127,7 +133,6 @@ class Server:
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            print(dobj)
             if(session.check(dobj)):
                 error = self.db.delete(dobj.getUsername(), str(dobj))
                 ret = self.e.delete_err(error)
@@ -141,6 +146,7 @@ class Server:
                     error = self.db.write(sobj.getRecipient(), str(sobj))
                     ret = self.e.send_err(error)
                     return(ret)
+                    print("message sent")
                 else:
                     ret = "Session Validation error?"
                     return ret
@@ -166,8 +172,9 @@ class Server:
         print("listening...")
         connected_clients = []
         sessions = []
+        counter = 0
         while True:
-
+            counter += 1
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -189,6 +196,7 @@ class Server:
                 for s in sessions:
                     if s.conn in clients_allowed:
                         data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
+
                         if data:
                             cry = Crypt()
                             ret_data = self.handleReq(data, s)
