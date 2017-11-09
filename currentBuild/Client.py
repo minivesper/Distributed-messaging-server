@@ -2,11 +2,13 @@ import socket
 import sys
 import re
 import getpass
+import select
 # import inquirer
 from Crypt import *
 from Requests import *
 from pprint import pprint
 from inputHandle import *
+import time
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
@@ -65,7 +67,11 @@ class Client:
         data = bytearray()
         packetsize = self.getSocket().recv(4)
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+            if self.getSocket() in read_sockets:
+                data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            else:
+                return "timeout"
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
@@ -83,6 +89,8 @@ class Client:
         elif(inp_str == "DMSG"):
             if(self.cachedMessages == None):
                 self.handleCommand("CMSG",username)
+                if(self.cachedMessages == None):
+                    return
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):

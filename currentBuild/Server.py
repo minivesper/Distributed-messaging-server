@@ -6,6 +6,7 @@ from Requests import *
 from Database import *
 from Crypt import *
 from errHandle import *
+import time
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
 
@@ -61,7 +62,11 @@ class Server:
         if int.from_bytes(packetsize,'little') == 0:
             return None
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            data.extend(connection.recv(self.getBUFFER_SIZE()))
+            read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+            if connection in read_sockets:
+                data.extend(connection.recv(self.getBUFFER_SIZE()))
+            else:
+                return "TMOT"
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
@@ -76,6 +81,9 @@ class Server:
             else:
                 ret = ("Not a valid login?")
             return(ret)
+
+        elif data[0:4] == "TMOT":
+            ret = "you timed out ya fool"
 
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
