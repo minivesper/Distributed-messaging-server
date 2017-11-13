@@ -83,6 +83,8 @@ class Client:
         elif(inp_str == "DMSG"):
             if(self.cachedMessages == None):
                 self.handleCommand("CMSG",username)
+                if(self.cachedMessages == None):
+                    return
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):
@@ -129,7 +131,7 @@ class Client:
         cry = Crypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb,pwdb)
+        pwd = cry.hashpwd(userb, pwdb)
         lreq = CACM(user,str(pwd),permission)
         lreq= lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
@@ -186,7 +188,7 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-    c = Client(ADDRESS_OF_SERVER,5005,1024)
+    c = Client(ADDRESS_OF_SERVER,5000,1024)
     user = None
     while not user:
         user = c.createUser()

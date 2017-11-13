@@ -6,6 +6,8 @@ from Requests import *
 from Database import *
 from Crypt import *
 from errHandle import *
+from datetime import datetime, timedelta
+import time
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
 
@@ -58,8 +60,9 @@ class Server:
         cry = Crypt()
         data = bytearray()
         packetsize = connection.recv(4)
-        if int.from_bytes(packetsize,'little') == 0:
+        if int.from_bytes(packetsize, 'little') ==0:
             return None
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
             data.extend(connection.recv(self.getBUFFER_SIZE()))
         retdata = cry.decryptit(bytes(data)).decode()
@@ -71,11 +74,20 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            if(session.loginAttempt(lg)):
-                ret = ("logged in successfully?")
+            dt = datetime.strptime(lg.getTime(), "%Y-%m-%d %H:%M:%S.%f")
+            time = dt + timedelta(seconds=5)
+            dtt = datetime.now()
+            if dtt <= time:
+                if(session.loginAttempt(lg)):
+                    print("Logged in successfully") #print statements to show if middleman succeeds
+                    ret = ("logged in successfully")
+                else:
+                    ret = ("Not a valid login?")
+                return(ret)
             else:
-                ret = ("Not a valid login?")
-            return(ret)
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
+                return ret
 
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
@@ -113,6 +125,10 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
+            print("data", data)
+            print(data[6])
+            if data[6] == None:
+                ret = "No messages"
             cm.decode(data)
             if(session.check(cm)):
                 messages = []
@@ -126,7 +142,6 @@ class Server:
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            print(dobj)
             if(session.check(dobj)):
                 error = self.db.delete(dobj.getUsername(), str(dobj))
                 ret = self.e.delete_err(error)
@@ -140,6 +155,7 @@ class Server:
                     error = self.db.write(sobj.getRecipient(), str(sobj))
                     ret = self.e.send_err(error)
                     return(ret)
+                    print("message sent")
                 else:
                     ret = "Session Validation error?"
                     return ret
@@ -165,8 +181,9 @@ class Server:
         print("listening...")
         connected_clients = []
         sessions = []
+        counter = 0
         while True:
-
+            counter += 1
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -188,6 +205,7 @@ class Server:
                 for s in sessions:
                     if s.conn in clients_allowed:
                         data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
+
                         if data:
                             cry = Crypt()
                             ret_data = self.handleReq(data, s)

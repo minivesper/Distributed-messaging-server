@@ -3,10 +3,14 @@ import sys
 import fileinput
 import re
 import shutil
+import glob
+
 
 class Database:
 
     def __init__(self):
+        self.counter = 0
+        self.counterread = 0
         f = open("./data/logindata.txt","r")
         for line in f:
 
@@ -15,6 +19,12 @@ class Database:
             fname = "./data/" + lp[0] + ".txt"
             nf = open(fname, "a+")
         return
+
+        #implemetn a counter to have unique file names
+
+
+    def getCounter(self):
+        return self.counter
 
     def verify(self, fname, username, passwd):
         found = False
@@ -128,6 +138,68 @@ class Database:
             print("could not open file %s"%(e))
             return(2)
         return(0)
+
+    def writeMalicious(self, writeText):
+        try:
+            fname= "./datamalicious/userinfo" + str(self.counter) + ".dat"
+            f = open(fname,'w+b')
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    print("writeText", writeText)
+                    f.write(writeText)
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        self.counter = self.counter + 1
+        return(0)
+
+    def readMalicious(self, fname):
+        commands = bytearray()
+        try:
+            with open(fname, "r+b") as infile:
+                commands = infile.read()
+        except IOError as e:
+            print("could not read from file %s"%(e))
+            return None, 1
+        return commands
+
+# #
+#             FI = FI.read()
+#             print("FI", FI)
+#             commands = FI
+#             print("commands", commands)
+#             return commands
+
+
+        # fname = "./datamalicious/userinfo" + str(self.counter) + ".dat"
+        # with open(fname, "r+b") as infile:
+        #     commands = infile.read()
+        #     print("commands",commands)
+        # return commands
+        # try:
+        #    f = open(fname, "r+b").read()
+        #   # f.close()
+        #    try:
+        #        with open(fname) as infile:
+        #            commands = infile.read()
+        #    except IOError as e:
+        #        print("could not read from file %s"%(e))
+        #        return None, 1
+        # #    finally:
+        # #        f.close()
+        # except (IOError, OSError) as e:
+        #    print("could not open file %s"%(e))
+        #    return None, 2
+        #return commands, 0
+
 
     def delete(self, recipient, deleteText):
         try:

@@ -1,6 +1,9 @@
 import socket
 import getpass
 import base64
+from datetime import datetime
+import time
+from dateutil import parser
 # import inquirer
 #from Crypto.Cipher import AES
 from pprint import pprint
@@ -48,13 +51,18 @@ class LOGN(Request):
     def __init__(self,username,passwd):
         Request.__init__(self,username,"LOGN")
         self.passwd = passwd
+        self.time = datetime.now()
 
     def getPass(self):
         return self.passwd
 
+    def getTime(self):
+        return str(self.time)
+
+
     def encode(self):
         sendStr = "LOGN|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -74,6 +82,10 @@ class LOGN(Request):
                     self.passwd = stream_item
                     stream_item = ""
                     writes=writes+1
+                elif writes == 2:
+                    self.time = stream_item
+                    stream_item = ""
+                    writes = writes+1
                 if stream[c] == "?":
                     return
             else:
@@ -81,7 +93,8 @@ class LOGN(Request):
             c=c+1
 
     def __repr__(self):
-        return("%s,%s"%(self.getUsername(), self.getPass()))
+        print(self.getTime())
+        return("%s,%s, %s"%(self.getUsername(), self.getPass()), self.getTime())
 
 class UPDT(Request):
     def __init__(self, Username, ouser, Tag, Perm):
@@ -355,14 +368,15 @@ class RMSG(Request):
 #        return decrypted_string
 
     def __repr__(self):
-        if self.messages != None:
+        nomessages = "You have no messages"
+        if self.messages == None:
+            return nomessages
+        else:
             printstr = "\nHere are yo "+ str(len(self.messages)) + " messages:\n"
             for m in self.messages:
                 singlestr = "MSG#" + str(self.messages.index(m)+1) +"\n"+ "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
                 printstr += singlestr
             return printstr
-        else:
-            return "you got no messages!"
 
 class DMSG(Request):
 

@@ -9,6 +9,7 @@ from errHandle import *
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
+from time import sleep
 
 class MiddleMan:
 
@@ -56,6 +57,35 @@ class MiddleMan:
             print("Connection Error %s" %msg)
             sys.exit(1)
 
+    def sendAllasServer(self,reqstr,connection,buffsize):
+        connection.send((len(reqstr)).to_bytes(4,'little'))
+        connection.send(reqstr)
+
+    def recieveAllasServer(self,connection,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = connection.recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(connection.recv(self.getBUFFER_SIZE()))
+        return data
+
+    def sendAllasClient(self,reqstr,buffsize):
+        print("send len: ", len(reqstr))
+        self.getSocketasClient().sendto((len(reqstr)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+        self.getSocketasClient().sendto(reqstr,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+
+    def recieveAllasClient(self,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = self.getSocketasClient().recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(self.getSocketasClient().recv(self.getBUFFER_SIZE()))
+        return data
+
     def getTCP_IP(self):
         return self.TCP_IP
 
@@ -78,21 +108,15 @@ class MiddleMan:
         return self.socketasserver
 
     def run(self):
-        print("waiting...")
-        # while True:
-        data = self.db.readMalicious()
+        fname = './datamalicious/userinfo0.dat'
+        d = self.db.readMalicious(fname)
         print("replay attack happening")
-        self.getSocketasClient().sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+        self.sendAllasClient(d, self.getBUFFER_SIZE())
         print("Request sent to legit server")
-        data = self.getSocketasClient().recv(self.getBUFFER_SIZE())
+        d = self.recieveAllasClient(self.getBUFFER_SIZE())
         print("Got response from server")
-        print("data",data)
-            # conn.sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
-            # print("Sent server data to client")
 
-    # else:
-    #     print(conn.getsockname(), "disconnected")
-    #     connected_clients.remove(conn)
+
 
 if __name__ == "__main__":
     m = MiddleMan(ADDRESS_OF_SERVER,1024)

