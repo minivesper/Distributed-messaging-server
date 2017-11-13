@@ -6,6 +6,7 @@ from Requests import *
 from Database import *
 from Crypt import *
 from errHandle import *
+from datetime import datetime, timedelta
 import time
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
@@ -18,6 +19,7 @@ class Server:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.db = Database()
         self.e = errHandle()
+        self.active_users = []
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,8 +61,9 @@ class Server:
         cry = Crypt()
         data = bytearray()
         packetsize = connection.recv(4)
-        if int.from_bytes(packetsize,'little') == 0:
+        if int.from_bytes(packetsize, 'little') ==0:
             return None
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
             read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
             if connection in read_sockets:
@@ -70,17 +73,31 @@ class Server:
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
+
+
     def handleReq(self, data, session):
         ret = "nothing to see here"
 
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            if(session.loginAttempt(lg)):
-                ret = ("logged in successfully?")
+            dt = datetime.strptime(lg.getTime(), "%Y-%m-%d %H:%M:%S.%f")
+            time = dt + timedelta(seconds=5)
+            dtt = datetime.now()
+            if dtt <= time:
+                if(session.loginAttempt(lg)):
+                    if lg.getUsername() not in self.active_users:
+                        print("Logged in successfully") #print statements to show if middleman succeeds
+                        ret = ("logged in successfully")
+                    else:
+                        ret = ("Already logged in byeeee")
+                else:
+                    ret = ("Not a valid login?")
+                return(ret)
             else:
-                ret = ("Not a valid login?")
-            return(ret)
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
+                return ret
 
         elif data[0:4] == "TMOT":
             ret = "you timed out ya fool"
@@ -121,6 +138,10 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
+            print("data", data)
+            print(data[6])
+            if data[6] == None:
+                ret = "No messages"
             cm.decode(data)
             if(session.check(cm)):
                 messages = []
@@ -134,7 +155,6 @@ class Server:
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            print(dobj)
             if(session.check(dobj)):
                 error = self.db.delete(dobj.getUsername(), str(dobj))
                 ret = self.e.delete_err(error)
@@ -148,6 +168,7 @@ class Server:
                     error = self.db.write(sobj.getRecipient(), str(sobj))
                     ret = self.e.send_err(error)
                     return(ret)
+                    print("message sent")
                 else:
                     ret = "Session Validation error?"
                     return ret
@@ -173,8 +194,9 @@ class Server:
         print("listening...")
         connected_clients = []
         sessions = []
-        while True:
 
+        counter = 0
+        while True:
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -200,9 +222,15 @@ class Server:
                             cry = Crypt()
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
+                            if s.getUsername() not in self.active_users:
+                                self.active_users.append(s.getUsername())
+                            else:
+                                print(s.conn.getsockname(), "disconnected")
+                                connected_clients.remove(s.conn)
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             connected_clients.remove(s.conn)
+
 
 if __name__ == "__main__":
     s = Server(ADDRESS_OF_CLIENT,5005,1024)

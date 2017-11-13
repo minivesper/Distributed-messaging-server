@@ -15,6 +15,12 @@ class Session:
         self.CACMp = True
         self.DMSGp = False
 
+    def getLoggedin(self):
+        return self.loggedin
+
+    def getUsername(self):
+        return self.username
+
     def loginAttempt(self, LOGNreq):
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
         if ver:

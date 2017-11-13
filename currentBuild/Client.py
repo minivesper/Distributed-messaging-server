@@ -47,6 +47,7 @@ class Client:
         return self.socket
 
     def handleReturn(self, returnreq):
+        print("r",returnreq)
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
@@ -54,6 +55,7 @@ class Client:
             print(rm)
         else:
             print(returnreq)
+
 
     def sendAll(self,reqstr,buffsize):
         cry = Crypt()
@@ -137,7 +139,7 @@ class Client:
         cry = Crypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb,pwdb)
+        pwd = cry.hashpwd(userb, pwdb)
         lreq = CACM(user,str(pwd),permission)
         lreq= lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
@@ -165,9 +167,12 @@ class Client:
         lreq = lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
-        print(data)
         if(data == "Not a valid login?"):
             return None
+        elif (data == "Already logged in byeeee"):
+            print(data)
+            self.getSocket().close()
+            sys.exit(1)
         else:
             return user
 
