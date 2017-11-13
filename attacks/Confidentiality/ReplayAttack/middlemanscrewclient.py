@@ -108,14 +108,12 @@ class MiddleMan:
         return self.socketasserver
 
     def run(self):
-        fname = './datamalicious/userinfo2.dat'
+        fname = './datamalicious/userinfo0.dat'
         d = self.db.readMalicious(fname)
         print("replay attack happening")
-        print("data",d)
         self.sendAllasClient(d, self.getBUFFER_SIZE())
         print("Request sent to legit server")
         d = self.recieveAllasClient(self.getBUFFER_SIZE())
-        print("d",d)
         print("Got response from server")
 
 

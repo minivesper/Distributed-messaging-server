@@ -6,6 +6,8 @@ from Requests import *
 from Database import *
 from Crypt import *
 from errHandle import *
+from datetime import datetime, timedelta
+import time
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
 
@@ -73,12 +75,20 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            if(session.loginAttempt(lg)):
-                print("logged in successfully")
-                ret = ("logged in successfully")
+            dt = datetime.strptime(lg.getTime(), "%Y-%m-%d %H:%M:%S.%f")
+            time = dt + timedelta(seconds=5)
+            dtt = datetime.now()
+            if dtt <= time:
+                if(session.loginAttempt(lg)):
+                    print("Logged in successfully") #print statements to show if middleman succeeds
+                    ret = ("logged in successfully")
+                else:
+                    ret = ("Not a valid login?")
+                return(ret)
             else:
-                ret = ("Not a valid login?")
-            return(ret)
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
+                return ret
 
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
