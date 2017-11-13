@@ -19,6 +19,7 @@ class Server:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.db = Database()
         self.e = errHandle()
+        self.active_users = []
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,6 +69,8 @@ class Server:
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
+
+
     def handleReq(self, data, session):
         ret = "nothing to see here"
 
@@ -79,8 +82,11 @@ class Server:
             dtt = datetime.now()
             if dtt <= time:
                 if(session.loginAttempt(lg)):
-                    print("Logged in successfully") #print statements to show if middleman succeeds
-                    ret = ("logged in successfully")
+                    if lg.getUsername() not in self.active_users:
+                        print("Logged in successfully") #print statements to show if middleman succeeds
+                        ret = ("logged in successfully")
+                    else:
+                        ret = ("Already logged in byeeee")
                 else:
                     ret = ("Not a valid login?")
                 return(ret)
@@ -181,9 +187,9 @@ class Server:
         print("listening...")
         connected_clients = []
         sessions = []
+
         counter = 0
         while True:
-            counter += 1
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -205,14 +211,19 @@ class Server:
                 for s in sessions:
                     if s.conn in clients_allowed:
                         data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
-
                         if data:
                             cry = Crypt()
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
+                            if s.getUsername() not in self.active_users:
+                                self.active_users.append(s.getUsername())
+                            else:
+                                print(s.conn.getsockname(), "disconnected")
+                                connected_clients.remove(s.conn)
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             connected_clients.remove(s.conn)
+
 
 if __name__ == "__main__":
     s = Server(ADDRESS_OF_CLIENT,5005,1024)
