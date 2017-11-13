@@ -45,6 +45,7 @@ class Client:
         return self.socket
 
     def handleReturn(self, returnreq):
+        print("r",returnreq)
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
@@ -52,6 +53,7 @@ class Client:
             print(rm)
         else:
             print(returnreq)
+
 
     def sendAll(self,reqstr,buffsize):
         cry = Crypt()
@@ -107,7 +109,6 @@ class Client:
         if(req != ""):
             self.sendAll(req,self.getBUFFER_SIZE())
             data = self.recieveAll(self.getBUFFER_SIZE())
-            print("data: ", data)
             self.handleReturn(data)
         else:
             print("%s is not a valid request type"%(inp_str))
@@ -163,9 +164,12 @@ class Client:
         lreq = lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
-        print(data)
         if(data == "Not a valid login?"):
             return None
+        elif (data == "Already logged in byeeee"):
+            print(data)
+            self.getSocket().close()
+            sys.exit(1)
         else:
             return user
 
@@ -192,7 +196,7 @@ class Client:
             #self.handleCommand(response)
 
 if __name__ == "__main__":
-    c = Client(ADDRESS_OF_SERVER,5000,1024)
+    c = Client(ADDRESS_OF_SERVER,5005,1024)
     user = None
     while not user:
         user = c.createUser()

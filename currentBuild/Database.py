@@ -20,9 +20,6 @@ class Database:
             nf = open(fname, "a+")
         return
 
-        #implemetn a counter to have unique file names
-
-
     def getCounter(self):
         return self.counter
 
@@ -106,7 +103,6 @@ class Database:
             with open(fname) as infile:
                 for line in infile:
                     lparts = line.split(",")
-                    print("lparts11", lparts)
                     for i in range(len(lparts)):
                         found = usercha.search(lparts[i])
                         if found:
@@ -124,7 +120,6 @@ class Database:
             f = open(fname, 'a')
             if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
                 try:
-                    print("writeText", writeText)
                     f.write(writeText + "\n")
                 except EXPECTED_EXCEPTION_TYPES as e:
                     print("could not write to file %s"%(e))
@@ -145,7 +140,6 @@ class Database:
             f = open(fname,'w+b')
             if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
                 try:
-                    print("writeText", writeText)
                     f.write(writeText)
                 except EXPECTED_EXCEPTION_TYPES as e:
                     print("could not write to file %s"%(e))
@@ -170,36 +164,6 @@ class Database:
             print("could not read from file %s"%(e))
             return None, 1
         return commands
-
-# #
-#             FI = FI.read()
-#             print("FI", FI)
-#             commands = FI
-#             print("commands", commands)
-#             return commands
-
-
-        # fname = "./datamalicious/userinfo" + str(self.counter) + ".dat"
-        # with open(fname, "r+b") as infile:
-        #     commands = infile.read()
-        #     print("commands",commands)
-        # return commands
-        # try:
-        #    f = open(fname, "r+b").read()
-        #   # f.close()
-        #    try:
-        #        with open(fname) as infile:
-        #            commands = infile.read()
-        #    except IOError as e:
-        #        print("could not read from file %s"%(e))
-        #        return None, 1
-        # #    finally:
-        # #        f.close()
-        # except (IOError, OSError) as e:
-        #    print("could not open file %s"%(e))
-        #    return None, 2
-        #return commands, 0
-
 
     def delete(self, recipient, deleteText):
         try:
