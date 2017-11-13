@@ -6,6 +6,10 @@ from Requests import *
 from Database import *
 from Crypt import *
 from errHandle import *
+import Crypto
+from Crypto.PublicKey import RSA
+from Crypto import Random
+from Crypto.Hash import MD5
 from datetime import datetime, timedelta
 import time
 
@@ -184,6 +188,17 @@ class Server:
         return(ret)
 
     def run(self):
+        if(there is a key):
+            readstuff
+            ncry = Crypt()
+            loadit
+        else:
+            ncry = NewCrypt(1024)
+            print(ncry.random_gen)
+            print("generated new keypair with publickey:")
+            print(ncry.my_keypair.exportKey().decode()[31:-29])
+            print("")
+            saveit
         print("listening...")
         connected_clients = []
         sessions = []
@@ -197,8 +212,9 @@ class Server:
                 s = Session(conn)
                 sessions.append(s)
                 connected_clients.append(s.conn)
-
+                #swap public keys
                 print('Connection address:', addr)
+                print('Client @' + addr + ' has public key' + clientkey)
 
             clients_allowed = []
             try:
@@ -212,7 +228,8 @@ class Server:
                     if s.conn in clients_allowed:
                         data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            cry = Crypt()
+                            cry = OldCrypt()
+                            data = cry.decryptit(data)
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
