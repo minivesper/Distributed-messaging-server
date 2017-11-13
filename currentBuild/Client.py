@@ -168,12 +168,14 @@ class Client:
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
         if(data == "Not a valid login?"):
+            print(data)
             return None
         elif (data == "Already logged in byeeee"):
             print(data)
             self.getSocket().close()
             sys.exit(1)
         else:
+            print(data)
             return user
 
     #inquirer code we are not using for the time being

@@ -87,6 +87,7 @@ class Server:
             if dtt <= time:
                 if(session.loginAttempt(lg)):
                     if lg.getUsername() not in self.active_users:
+                        self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
                         ret = ("logged in successfully")
                     else:
@@ -117,7 +118,6 @@ class Server:
                         ret = self.e.admin_err(error3)
                         print(error3)
                         if error3:
-
                             wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
                             error4 = self.db.write("permissionMatrix", str(wperm))
                             ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
@@ -222,11 +222,6 @@ class Server:
                             cry = Crypt()
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
-                            if s.getUsername() not in self.active_users:
-                                self.active_users.append(s.getUsername())
-                            else:
-                                print(s.conn.getsockname(), "disconnected")
-                                connected_clients.remove(s.conn)
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             connected_clients.remove(s.conn)
