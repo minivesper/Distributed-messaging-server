@@ -30,7 +30,7 @@ def crack(bytestr, search):
 
 def incbyteRFC(key, ind):
     newnum = key[ind] + 1
-    if(newnum > 32):
+    if(newnum > 64):
         key[ind] = 0
         key = incbyteRFC(key,ind-1)
     else:
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     ciphertext = f.encrypt(string)
     print(f.decrypt(ciphertext))
     print(crack(ciphertext, "test"))
-    # print(crack(bytestr,"LOGN"))
+    print(crack(bytestr,"LOGN"))
