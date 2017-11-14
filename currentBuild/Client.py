@@ -17,6 +17,8 @@ class Client:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
         self.ih = inputHandle()
+        self.crypt = Crypt()
+        self.dbc = DatabaseC()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,7 +55,6 @@ class Client:
             print(rm)
         else:
             print(returnreq)
-
 
     def sendAll(self,reqstr,buffsize):
         cry = Crypt()
@@ -130,12 +131,18 @@ class Client:
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        cry = Crypt()
+        cry = OldCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = cry.hashpwd(userb, pwdb)
-        lreq = CACM(user,str(pwd),permission)
+        lreq = CACM(user,str(pwd),permission) #create the CACM request
         lreq= lreq.encode()
+        keypair = crypt.GenKeys()
+        dbc.writeKey(user, keypair)
+        pubkey_c = dbc.readKey(user,keypair)
+        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server
+        preq = preq.encode()
+
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
         if(data == "username already exists, please enter a new username"):

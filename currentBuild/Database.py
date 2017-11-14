@@ -201,3 +201,21 @@ class Database:
            print("could not open file %s"%(e))
            return None, 2
         return messages, 0
+
+    def readserver(self, username):
+        fname = "./data/" + username + ".txt"
+        try:
+           f = open(fname, 'r')
+           f.close()
+           try:
+               with open(fname) as infile:
+                   f = infile.readline()
+                   return f
+           except IOError as e:
+               print("could not read from file %s"%(e))
+               return None
+           finally:
+               f.close()
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+           return None

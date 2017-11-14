@@ -59,7 +59,6 @@ class LOGN(Request):
     def getTime(self):
         return str(self.time)
 
-
     def encode(self):
         sendStr = "LOGN|"
         sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getTime()) + "?"
@@ -95,6 +94,99 @@ class LOGN(Request):
     def __repr__(self):
         print(self.getTime())
         return("%s,%s, %s"%(self.getUsername(), self.getPass()), self.getTime())
+
+
+class PUBK(Request):
+    def __init__(self,username,pubkey):
+        Request.__init__(self,username, "PUBK")
+        self.pubkey = pubkey
+
+    def getpubkey(self):
+        return self.pubkey
+
+    def encode(self):
+        sendStr = "PUBK|"
+        sendStr +=  self.addchar(self.getUsername()) + "|" + self.addchar(self.getpubkey) + "?"
+        return sendStr
+
+    def decode(self, stream):
+        writes = 0
+        stream_item = ""
+        c = 5
+        while c  < len(stream):
+            if stream[c] == "\\" and stream[c+1] == ",":
+                stream_item += stream[c] + stream[c+1]
+                c = c+1
+            elif stream[c] == "\\":
+                stream_item += stream[c+1]
+                c=c+1
+            elif stream[c] == "|" or stream[c] == "?":
+                if writes == 0:
+                    self.username = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    self.pubkey = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                if stream[c] == "?":
+                    return
+            else:
+                stream_item += stream[c]
+            c=c+1
+
+    def __repr__(self):
+        return("%s,%s, %s"%(self.getUsername(), self.getpubkey()))
+
+class SMSG(Request):
+    def __init__(self, Username, Recipient, Message):
+        Request.__init__(self,Username,"SMSG")
+        self.Recipient = Recipient
+        self.Message = Message
+
+    def encode(self):
+        sendStr = "SMSG|"
+        sendStr +=  self.addchar(self.getUsername()) +"|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) + "?"
+        return sendStr
+
+    def decode(self, stream):
+        writes = 0
+        stream_item = ""
+        c = 5
+        while c  < len(stream):
+            if stream[c] == "\\" and stream[c+1] == ",":
+                stream_item += stream[c] + stream[c+1]
+                c = c+1
+            elif stream[c] == "\\":
+                stream_item += stream[c+1]
+                c=c+1
+            elif stream[c] == "|" or stream[c] == "?":
+                if writes == 0:
+                    self.username = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    self.Recipient = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 2:
+                    self.Message = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                if stream[c] == "?":
+                    return
+            else:
+                stream_item += stream[c]
+            c=c+1
+
+    def getRecipient(self):
+        return self.Recipient
+
+    def getMessage(self):
+        return self.Message
+
+    def __repr__(self):
+        return("%s,%s,%s"%(self.username,self.Recipient,self.Message))
 
 class UPDT(Request):
     def __init__(self, Username, ouser, Tag, Perm):
@@ -217,74 +309,8 @@ class CACM(Request):
         self.password = parselist[2]
         self.permission = parselist[3]
 
-    #def encrypt(self,string):
-    #    encrypted_string = base64.b64encode(cipher.encrypt(string))
-    #    return encrypted_string
-
-    #def decrypt(self,string):
-    #    decrypted_string = cipher.decrypt(base64.b64decode(string))
-    #    return decrypted_string
-
     def __repr__(self):
         return("%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis()))
-
-
-class SMSG(Request):
-    def __init__(self, Username, Recipient, Message):
-        Request.__init__(self,Username,"SMSG")
-        self.Recipient = Recipient
-        self.Message = Message
-
-    def encode(self):
-        sendStr = "SMSG|"
-        sendStr +=  self.addchar(self.getUsername()) +"|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) + "?"
-        return sendStr
-
-    def decode(self, stream):
-        writes = 0
-        stream_item = ""
-        c = 5
-        while c  < len(stream):
-            if stream[c] == "\\" and stream[c+1] == ",":
-                stream_item += stream[c] + stream[c+1]
-                c = c+1
-            elif stream[c] == "\\":
-                stream_item += stream[c+1]
-                c=c+1
-            elif stream[c] == "|" or stream[c] == "?":
-                if writes == 0:
-                    self.username = stream_item
-                    stream_item = ""
-                    writes=writes+1
-                elif writes == 1:
-                    self.Recipient = stream_item
-                    stream_item = ""
-                    writes=writes+1
-                elif writes == 2:
-                    self.Message = stream_item
-                    stream_item = ""
-                    writes=writes+1
-                if stream[c] == "?":
-                    return
-            else:
-                stream_item += stream[c]
-            c=c+1
-#    def encrypt(self,string):
-#        encrypted_string = base64.b64encode(cipher.encrypt(string))
-#        return encrypted_string
-
-#    def decrypt(self,string):
-#        decrypted_string = cipher.decrypt(base64.b64decode(string))
-#        return decrypted_string
-
-    def getRecipient(self):
-        return self.Recipient
-
-    def getMessage(self):
-        return self.Message
-
-    def __repr__(self):
-        return("%s,%s,%s"%(self.username,self.Recipient,self.Message))
 
 class RMSG(Request):
 
@@ -359,13 +385,6 @@ class RMSG(Request):
                 stream_item += stream[c]
             c=c+1
 
-#    def encrypt(self,string):
-#        encrypted_string = base64.b64encode(cipher.encrypt(string))
-#        return encrypted_string
-
-#    def decrypt(self,string):
-#        decrypted_string = cipher.decrypt(base64.b64decode(string))
-#        return decrypted_string
 
     def __repr__(self):
         nomessages = "You have no messages"
@@ -377,6 +396,7 @@ class RMSG(Request):
                 singlestr = "MSG#" + str(self.messages.index(m)+1) +"\n"+ "From: " + m[0] + "\nTo: " + m[1] + "\nmsg: " + m[2] + "\n"
                 printstr += singlestr
             return printstr
+
 
 class DMSG(Request):
 
@@ -454,13 +474,6 @@ class CMSG(Request):
             else:
                 stream_item += stream[c]
             c=c+1
-    #def encrypt(self,string):
-    #    encrypted_string = base64.b64encode(cipher.encrypt(string))
-    #    return encrypted_string
-
-    #def decrypt(self,string):
-    #    decrypted_string = cipher.decrypt(base64.b64decode(string))
-    #    return decrypted_string
 
     def __repr__(self):
         return("%s"%(self.getUsername()))

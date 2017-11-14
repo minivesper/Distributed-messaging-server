@@ -100,6 +100,20 @@ class Server:
                 ret = "Timed Out"
                 return ret
 
+        elif data[0:4] == "PUBK":
+            pk = PUBK(None, None)
+            pk.decode(data)
+            self.db.write(pk) #saves user's public key
+            server_pkey = self.db.readserver() #reads server key
+            pks = PUBK(None, None) #create new PUBK request object to send back to the client
+
+            #decode that part of data with its public key
+            #send whatever server got back to client to verify the signature
+        elif data[0:4] =="VERF":
+            vf = VERF(None,None)
+            vf.decode(data)
+            verobj = vf.getverobj()
+
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
             ca.decode(data)
@@ -188,17 +202,7 @@ class Server:
         return(ret)
 
     def run(self):
-        if(there is a key):
-            readstuff
-            ncry = Crypt()
-            loadit
-        else:
-            ncry = NewCrypt(1024)
-            print(ncry.random_gen)
-            print("generated new keypair with publickey:")
-            print(ncry.my_keypair.exportKey().decode()[31:-29])
-            print("")
-            saveit
+
         print("listening...")
         connected_clients = []
         sessions = []
