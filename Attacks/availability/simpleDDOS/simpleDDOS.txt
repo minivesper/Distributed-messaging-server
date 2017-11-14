@@ -11,7 +11,6 @@ To replicate: start server, run /attack/availability/simpleDDOS/DDOS.py
 To solve this vulnerability, a timeout structure will be implemented so a request recieving no data is cut after a certain
 amount of time.
 
-POST-PATCH: The database is now organized into a file for each user, with a cap of 1000000 bytes for a users file.
-a user can no longer slow down the server by continuously sending smsgs.
+POST-PATCH: the server times out a receive if it does not receive any data for four secondss.
 
 Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?

@@ -2,6 +2,7 @@ import socket
 import sys
 import re
 import getpass
+import select
 # import inquirer
 from Crypt import *
 from Requests import *
@@ -45,6 +46,19 @@ class Client:
     def getSocket(self):
         return self.socket
 
+    def recieveAll(self,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = self.getSocket().recv(4)
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+            if self.getSocket() in read_sockets:
+                data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            else:
+                return "timeout"
+        retdata = cry.decryptit(bytes(data)).decode()
+        return retdata
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
@@ -74,4 +88,4 @@ if __name__ == "__main__":
     c.createSock(port)
     c.getSocket().sendto((1000).to_bytes(4,'little'),(c.getTCP_IP(), c.getTCP_PORT()))
     print("sent 1000 byte request\nwaiting for response...")
-    print("response recieved: ", c.getSocket().recv(c.getBUFFER_SIZE()))
+    print("response recieved: ", c.recieveAll(c.getSocket().recv(c.getBUFFER_SIZE())))

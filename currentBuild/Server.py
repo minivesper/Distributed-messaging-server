@@ -1,5 +1,7 @@
 import socket
 import sys
+import fileinput
+import os
 import select
 from Session import *
 from Requests import *
@@ -69,7 +71,11 @@ class Server:
             return None
         print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            data.extend(connection.recv(self.getBUFFER_SIZE()))
+            read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+            if connection in read_sockets:
+                data.extend(connection.recv(self.getBUFFER_SIZE()))
+            else:
+                return "TMOT"
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
@@ -81,10 +87,7 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            dt = datetime.strptime(lg.getTime(), "%Y-%m-%d %H:%M:%S.%f")
-            time = dt + timedelta(seconds=5)
-            dtt = datetime.now()
-            if dtt <= time:
+            if(session.datecheck(lg.getTime())):
                 if(session.loginAttempt(lg)):
                     if lg.getUsername() not in self.active_users:
                         self.active_users.append(lg.getUsername())
@@ -113,6 +116,9 @@ class Server:
             vf = VERF(None,None)
             vf.decode(data)
             verobj = vf.getverobj()
+
+        elif data[0:4] == "TMOT":
+            ret = "you timed out ya fool"
 
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
@@ -154,34 +160,46 @@ class Server:
             if data[6] == None:
                 ret = "No messages"
             cm.decode(data)
-            if(session.check(cm)):
-                messages = []
-                messages, error = self.db.read(str(cm.getUsername()))
-                ret = self.e.read_err(error)
-                if(error == 0):
-                    rm = RMSG(None, None)
-                    ret = rm.encode(messages)
+            if(session.datecheck(cm.getTime())):
+                if(session.check(cm)):
+                    messages = []
+                    messages, error = self.db.read(str(cm.getUsername()))
+                    ret = self.e.read_err(error)
+                    if(error == 0):
+                        rm = RMSG(None, None)
+                        ret = rm.encode(messages)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            if(session.check(dobj)):
-                error = self.db.delete(dobj.getUsername(), str(dobj))
-                ret = self.e.delete_err(error)
+            if(session.datecheck(dobj.getTime())):
+                if(session.check(dobj)):
+                    error = self.db.delete(dobj.getUsername(), str(dobj))
+                    ret = self.e.delete_err(error)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="SMSG":
             sobj = SMSG(None, None, None)
             sobj.decode(data)
             if(self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())):
-                if(session.check(sobj)):
-                    error = self.db.write(sobj.getRecipient(), str(sobj))
-                    ret = self.e.send_err(error)
-                    return(ret)
-                    print("message sent")
+                if(session.datecheck(sobj.getTime())):
+                    if(session.check(sobj)):
+                        error = self.db.write(sobj.getRecipient(), str(sobj))
+                        ret = self.e.send_err(error)
+                        return(ret)
+                        print("message sent")
+                    else:
+                        ret = "Session Validation error?"
+                        return ret
                 else:
-                    ret = "Session Validation error?"
+                    ret = "Timed out"
                     return ret
             else:
                 ret = sobj.getRecipient() + " is not a valid account?"
@@ -201,8 +219,26 @@ class Server:
                 ret = uobj.getouser() + "is not a valid account?"
         return(ret)
 
-    def run(self):
+    def saveKey(self, paths):
+        #after recieving a public key save it in "data/serverkeys/username.txt"
+        return
 
+    def loadKey(self, paths):
+        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+            f = open(paths)
+            keypair = RSA.importKey(f.read())
+            return keypair
+        else:
+            ncry = NewCrypt(1024)
+            print("generated new keypair")
+            keypair = ncry.my_keypair.exportKey('PEM')
+            self.db.writek('serverkeys/server', keypairw)
+            pubkey = ccry.my_pubkey.exportKey('PEM')
+            self.db.writek('clientkeys/server', pubkeyw)
+            return keypair
+
+    def run(self):
+        path = "data/serverkeys/server.txt"
         print("listening...")
         connected_clients = []
         sessions = []
@@ -218,7 +254,6 @@ class Server:
                 connected_clients.append(s.conn)
                 #swap public keys
                 print('Connection address:', addr)
-                print('Client @' + addr + ' has public key' + clientkey)
 
             clients_allowed = []
             try:
@@ -232,13 +267,17 @@ class Server:
                     if s.conn in clients_allowed:
                         data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            cry = OldCrypt()
-                            data = cry.decryptit(data)
+                            #keypair = loadKey(path)
+                            #cry = Crypt(keypair)
+                            #data = cry.decryptit(data)
+                            cry = Crypt()
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
+                            self.active_users.remove(s.getUsername())
                             connected_clients.remove(s.conn)
+                            sessions.remove(s)
 
 
 if __name__ == "__main__":

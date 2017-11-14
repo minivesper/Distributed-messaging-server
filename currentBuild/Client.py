@@ -2,11 +2,14 @@ import socket
 import sys
 import re
 import getpass
+import select
 # import inquirer
+from DatabaseC import *
 from Crypt import *
 from Requests import *
 from pprint import pprint
 from inputHandle import *
+import time
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
@@ -68,7 +71,11 @@ class Client:
         data = bytearray()
         packetsize = self.getSocket().recv(4)
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+            if self.getSocket() in read_sockets:
+                data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            else:
+                return "timeout"
         retdata = cry.decryptit(bytes(data)).decode()
         return retdata
 
@@ -105,6 +112,7 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
+            print(req)
             self.sendAll(req,self.getBUFFER_SIZE())
             data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)
@@ -117,14 +125,32 @@ class Client:
             self.handleCommand(inp, currentUsername)
 
     def createUser(self):
+        #generate keypairs for encryption
+        #and swap public keys
         user = None
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
             user = self.inputCredentials()
+            if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
+                 f = open("data/clientkeys/" + user + ".txt")
+                 keypairr = RSA.importKey(f.read())
+                 #keypairr = self.db.readk('serverkeys/server')
+                 ccry = Crypt(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
+            ncry = NewCrypt(1024)
+            print(ncry.random_gen)
+            print("generated new keypair")
+            keypairw = ncry.my_keypair.exportKey('PEM')
+            print(keypairw)
+            self.db.writek('clientkeys/' + user, keypairw)
+            pubkey = ncry.my_pubkey.exportKey('PEM')
+            #self.getSocket().sendto(pubkey,(self.getTCP_IP(), self.getTCP_PORT()))
+            #data = self.getSocket().recv(self.getBUFFER_SIZE())
+            #server_pubkey = data
+            self.db.writek('serverkeys/' + user, pubkey)
             return user
         else:
             print("LOGN or CACM dummy! not %s"%(inp))
@@ -151,20 +177,26 @@ class Client:
             return None
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
-            sys.exit(1)
+            user = self.createUser()
             return user
         else:
-            print(data)
+            print("account created, please login")
+            user = self.createUser()
             return user
 
     def inputCredentials(self):
-        cry = Crypt()
+        f = open("data/clientkeys/server.txt")
+        thier_pubkey = RSA.importKey(f.read())
         user = input("Username: ")
+        f = open("data/clientkeys/" + user + ".txt")
+        keypairr = RSA.importKey(f.read())
+        #keypairr = self.db.readk('serverkeys/server')
+        cry = Crypt(keypairr)
         pwd = getpass.getpass("Password for " + user + ": ")
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb,pwdb)
-        lreq = LOGN(user,str(pwd))
+        #pwd = cry.hashpwd(userb,pwdb)
+        lreq = LOGN(user,str(pwdb))
         lreq = lreq.encode()
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())

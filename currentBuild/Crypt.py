@@ -7,7 +7,6 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Hash import MD5
 from pprint import pprint
-import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -15,6 +14,23 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 #generate public/private key pairs
 #note: keypair is the private key
+
+class NewCrypt:#Randomly Generateing Asymetric Keys
+
+    def __init__(self, keylen):
+        self.my_keypair = self.keygen(keylen)
+        self.my_pubkey = self.my_keypair.publickey()
+        return
+
+    def keygen(self, keylen):
+        random_gen = Random.new().read
+        this_keypair = RSA.generate(keylen, random_gen)
+        return this_keypair
+
+    def exchangeKeys(self):
+        #in practice will exchange public keys, honestly not sure if this should even be in here
+        return
+
 class GenKeys:
     def __init__(self):
         self.keypair = self.genpair()
@@ -80,25 +96,18 @@ class asymetricSuite:
 class Crypt:
 
     def __init__(self, keypair):
-        #self.my_msg = my_msg.encode('utf-8')
         self.my_keypair = keypair
         self.my_pubkey = self.my_keypair.publickey()
         return
 
-    def exchangeKeys(self):
-        #In practice public keys are sent accross the wire
-        return
-
-    def getSignature(self):
-        # Generate digital signatures using private keys...
-        hash_of_my_msg = MD5.new(self.my_msg).digest()
-        my_signature = self.my_keypair.sign(hash_of_my_msg, '')
+    def getSignature(self, msg):
+        hash_of_my_msg = MD5.new(msg).digest()
+        my_signature = self.keypair.sign(hash_of_my_msg, '')
         return my_signature
 
-    def encPub(self, rec_key):
-        # Encrypt messages using the other party's public key...
-        encrypted_for_rec = self.rec_key.encrypt(self.my_msg, 32)
-        return encrypted_for_rec
+    def encPub(self, msg, thier_pubkey):
+        encrypted_for_them = thier_pubkey.encrypt(msg, 32)
+        return encrypted_for_them
 
     def decPri(self, encrypted_msg):
         # Decrypt messages using own private keys...
@@ -116,7 +125,17 @@ class Crypt:
             ret = False
             return ret
 
-class OldCrypt:
+    def encryptit(self, msg, thier_pubkey):
+        sig = getSignature(msg)
+        enc = encPub(msg, thier_pubkey)
+        return sig,enc
+
+    def decryptit(self, enc, sender_sig, sender_pubkey):
+        return
+
+
+
+class OldCrypt:#Fernet Key Encryption As Well As Hashing
     def __init__(self):
         return
 
