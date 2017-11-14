@@ -69,7 +69,9 @@ class asymetricSuite:
         return sig,enc
 
     def decryptit(self, enc, sender_sig, sender_pubkey):
-        return
+        dec = decPri(enc)
+        val = valSignature(dec, sender_sig, sender_pubkey)
+        return dec,val
 
 class FernetCrypt:#Fernet Key Encryption As Well As Hashing
     def __init__(self):
