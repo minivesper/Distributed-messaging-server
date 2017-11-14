@@ -60,14 +60,14 @@ class Client:
             print(returnreq)
 
     def sendAll(self,reqstr,buffsize):
-        cry = OldCrypt()
+        cry = FernetasymmetricSuite()
         req = cry.encryptit(reqstr)
         self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
         self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
 
     def recieveAll(self,buffsize):
         retdata = ""
-        cry = OldCrypt()
+        cry = FernetCrypt()
         data = bytearray()
         packetsize = self.getSocket().recv(4)
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
@@ -135,12 +135,12 @@ class Client:
                  f = open("data/clientkeys/" + user + ".txt")
                  keypairr = RSA.importKey(f.read())
                  #keypairr = self.db.readk('serverkeys/server')
-                 ccry = Crypt(keypairr)
+                 ccry = asymmetricSuite(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
-            ncry = NewCrypt(1024)
+            ncry = GenKeys(1024)
             print(ncry.random_gen)
             print("generated new keypair")
             keypairw = ncry.my_keypair.exportKey('PEM')
@@ -157,7 +157,7 @@ class Client:
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        cry = OldCrypt()
+        cry = FernetCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = cry.hashpwd(userb, pwdb)
@@ -191,7 +191,7 @@ class Client:
         f = open("data/clientkeys/" + user + ".txt")
         keypairr = RSA.importKey(f.read())
         #keypairr = self.db.readk('serverkeys/server')
-        cry = Crypt(keypairr)
+        cry = asymmetricSuite(keypairr)
         pwd = getpass.getpass("Password for " + user + ": ")
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')

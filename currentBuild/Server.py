@@ -57,14 +57,14 @@ class Server:
         return self.socket
 
     def sendAll(self,reqstr,connection,buffsize):
-        cry = OldCrypt()
+        cry = FernetCrypt()
         req = cry.encryptit(reqstr)
         connection.send((len(req)).to_bytes(4,'little'))
         connection.send(req)
 
     def recieveAll(self,connection,buffsize):
         retdata = ""
-        cry = OldCrypt()
+        cry = FernetCrypt()
         data = bytearray()
         packetsize = connection.recv(4)
         if int.from_bytes(packetsize, 'little') ==0:
@@ -229,7 +229,7 @@ class Server:
             keypair = RSA.importKey(f.read())
             return keypair
         else:
-            ncry = NewCrypt(1024)
+            ncry = GenKeys(1024)
             print("generated new keypair")
             keypair = ncry.my_keypair.exportKey('PEM')
             self.db.writek('serverkeys/server', keypairw)
@@ -270,7 +270,7 @@ class Server:
                             #keypair = loadKey(path)
                             #cry = Crypt(keypair)
                             #data = cry.decryptit(data)
-                            cry = OldCrypt()
+                            cry = FernetCrypt()
                             ret_data = self.handleReq(data, s)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
