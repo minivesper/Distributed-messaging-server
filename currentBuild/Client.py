@@ -2,12 +2,14 @@ import socket
 import sys
 import re
 import getpass
+import select
 # import inquirer
 from DatabaseC import *
 from Crypt import *
 from Requests import *
 from pprint import pprint
 from inputHandle import *
+import time
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
@@ -47,6 +49,7 @@ class Client:
         return self.socket
 
     def handleReturn(self, returnreq):
+        print("r",returnreq)
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
@@ -54,6 +57,27 @@ class Client:
             print(rm)
         else:
             print(returnreq)
+
+
+    def sendAll(self,reqstr,buffsize):
+        cry = Crypt()
+        req = cry.encryptit(reqstr)
+        self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+        self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+
+    def recieveAll(self,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = self.getSocket().recv(4)
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+            if self.getSocket() in read_sockets:
+                data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
+            else:
+                return "timeout"
+        retdata = cry.decryptit(bytes(data)).decode()
+        return retdata
 
     def handleCommand(self, inp_str, username):
         req = ""
@@ -69,11 +93,13 @@ class Client:
         elif(inp_str == "DMSG"):
             if(self.cachedMessages == None):
                 self.handleCommand("CMSG",username)
+                if(self.cachedMessages == None):
+                    return
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):
                     message_num =self.ih.deleteHandle(self.cachedMessages)
-                    req = DMSG(self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][2])
+                    req = DMSG(self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][2])
                     req = req.encode()
 
         elif(inp_str == "UPDT"):
@@ -86,12 +112,10 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            cry = OldCrypt()
-            req = cry.encryptit(req)
-            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
-            data = self.getSocket().recv(self.getBUFFER_SIZE())
-            data = cry.decryptit(data)
-            self.handleReturn(data.decode())
+            print(req)
+            self.sendAll(req,self.getBUFFER_SIZE())
+            data = self.recieveAll(self.getBUFFER_SIZE())
+            self.handleReturn(data)
         else:
             print("%s is not a valid request type"%(inp_str))
 
@@ -136,24 +160,22 @@ class Client:
         cry = OldCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb,pwdb)
+        pwd = cry.hashpwd(userb, pwdb)
         lreq = CACM(user,str(pwd),permission)
         lreq= lreq.encode()
-        print("pwd",str(pwd))
-        lreq = cry.encryptit(lreq)
-        self.getSocket().sendto(lreq,(self.getTCP_IP(), self.getTCP_PORT()))
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        data = cry.decryptit(data)
-        if(data.decode() == "username already exists, please enter a new username"):
-            print(data.decode())
+        self.sendAll(lreq,self.getBUFFER_SIZE())
+        data = self.recieveAll(self.getBUFFER_SIZE())
+        if(data == "username already exists, please enter a new username"):
+            print(data)
             user = self.createUser()
-            return
+            return None
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
-            sys.exit(1)
+            user = self.createUser()
             return user
         else:
-            print(data.decode())
+            print("account created, please login")
+            user = self.createUser()
             return user
 
     def inputCredentials(self):
@@ -170,18 +192,17 @@ class Client:
         #pwd = cry.hashpwd(userb,pwdb)
         lreq = LOGN(user,str(pwdb))
         lreq = lreq.encode()
-        #sig = cry.getSignature(lreq, cry.my_keypair)
-        enc = cry.encPub(lreq, thier_pubkey)
-        #lreq = cry.encryptit(lreq,cry.my_keypair,thier_pubkey)
-        self.getSocket().sendto(enc,(self.getTCP_IP(), self.getTCP_PORT()))
-        data = self.getSocket().recv(self.getBUFFER_SIZE())
-        data = cry.decPri(data)
-        #val = cry.valSignature(data, thier_sig, thier_pubkey)
-        #data = cry.decryptit(data)
-        print(data.decode())
-        if(data.decode() == "Not a valid login"):
+        self.sendAll(lreq,self.getBUFFER_SIZE())
+        data = self.recieveAll(self.getBUFFER_SIZE())
+        if(data == "Not a valid login?"):
+            print(data)
             return None
+        elif (data == "Already logged in byeeee"):
+            print(data)
+            self.getSocket().close()
+            sys.exit(1)
         else:
+            print(data)
             return user
 
     #inquirer code we are not using for the time being

@@ -1,4 +1,6 @@
 from Database import *
+from datetime import datetime, timedelta
+import time
 
 class Session:
 
@@ -15,6 +17,12 @@ class Session:
         self.CACMp = True
         self.DMSGp = False
 
+    def getLoggedin(self):
+        return self.loggedin
+
+    def getUsername(self):
+        return self.username
+
     def loginAttempt(self, LOGNreq):
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
         if ver:
@@ -23,6 +31,14 @@ class Session:
             self.setper(self.username)
             return True
         else:
+            return False
+
+    def datecheck(self,reqtime):
+            dt = datetime.strptime(reqtime, "%Y-%m-%d %H:%M:%S.%f")
+            time = dt + timedelta(seconds=5)
+            dtt = datetime.now()
+            if dtt <= time:
+                return True
             return False
 
     def setper(self,user):

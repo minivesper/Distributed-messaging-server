@@ -12,6 +12,8 @@ import Crypto
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Hash import MD5
+from datetime import datetime, timedelta
+import time
 
 ADDRESS_OF_CLIENT = '127.0.0.1'
 
@@ -23,6 +25,7 @@ class Server:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.db = Database()
         self.e = errHandle()
+        self.active_users = []
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,18 +56,55 @@ class Server:
     def getSocket(self):
         return self.socket
 
+    def sendAll(self,reqstr,connection,buffsize):
+        cry = Crypt()
+        req = cry.encryptit(reqstr)
+        connection.send((len(req)).to_bytes(4,'little'))
+        connection.send(req)
+
+    def recieveAll(self,connection,buffsize):
+        retdata = ""
+        cry = Crypt()
+        data = bytearray()
+        packetsize = connection.recv(4)
+        if int.from_bytes(packetsize, 'little') ==0:
+            return None
+        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
+        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
+            read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+            if connection in read_sockets:
+                data.extend(connection.recv(self.getBUFFER_SIZE()))
+            else:
+                return "TMOT"
+        retdata = cry.decryptit(bytes(data)).decode()
+        return retdata
+
+
+
     def handleReq(self, data, session):
-        data = data.decode()
         ret = "nothing to see here"
 
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            if(session.loginAttempt(lg)):
-                ret = ("logged in successfully")
+            if(session.datecheck(lg.getTime())):
+                if(session.loginAttempt(lg)):
+                    if lg.getUsername() not in self.active_users:
+                        self.active_users.append(lg.getUsername())
+                        print("Logged in successfully") #print statements to show if middleman succeeds
+                        ret = ("logged in successfully")
+                    else:
+                        ret = ("Already logged in byeeee")
+                else:
+                    ret = ("Not a valid login?")
+                return(ret)
             else:
-                ret = ("Not a valid login")
-            return(ret)
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
+                return ret
+
+        elif data[0:4] == "TMOT":
+            ret = "you timed out ya fool"
 
         elif data[0:4] == "CACM":
             ca = CACM(None, None, None)
@@ -81,7 +121,6 @@ class Server:
                         ret = self.e.admin_err(error3)
                         print(error3)
                         if error3:
-
                             wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
                             error4 = self.db.write("permissionMatrix", str(wperm))
                             ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
@@ -102,37 +141,54 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
+            print("data", data)
+            print(data[6])
+            if data[6] == None:
+                ret = "No messages"
             cm.decode(data)
-            if(session.check(cm)):
-                messages = []
-                messages, error = self.db.read(str(cm.getUsername()))
-                ret = self.e.read_err(error)
-                if(error == 0):
-                    rm = RMSG(None, None)
-                    ret = rm.encode(messages)
+            if(session.datecheck(cm.getTime())):
+                if(session.check(cm)):
+                    messages = []
+                    messages, error = self.db.read(str(cm.getUsername()))
+                    ret = self.e.read_err(error)
+                    if(error == 0):
+                        rm = RMSG(None, None)
+                        ret = rm.encode(messages)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            if(session.check(dobj)):
-                error = self.db.delete(dobj.getUsername(), str(dobj))
-                ret = self.e.delete_err(error)
+            if(session.datecheck(dobj.getTime())):
+                if(session.check(dobj)):
+                    error = self.db.delete(dobj.getUsername(), str(dobj))
+                    ret = self.e.delete_err(error)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="SMSG":
             sobj = SMSG(None, None, None)
             sobj.decode(data)
             if(self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())):
-                if(session.check(sobj)):
-                    error = self.db.write(sobj.getRecipient(), str(sobj))
-                    ret = self.e.send_err(error)
-                    return(ret)
+                if(session.datecheck(sobj.getTime())):
+                    if(session.check(sobj)):
+                        error = self.db.write(sobj.getRecipient(), str(sobj))
+                        ret = self.e.send_err(error)
+                        return(ret)
+                        print("message sent")
+                    else:
+                        ret = "Session Validation error?"
+                        return ret
                 else:
-                    ret = "Session Validation error"
+                    ret = "Timed out"
                     return ret
             else:
-                ret = sobj.getRecipient() + " is not a valid account"
+                ret = sobj.getRecipient() + " is not a valid account?"
 
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)
@@ -143,10 +199,10 @@ class Server:
                     ret = self.e.update_err(error)
                     return ret
                 else:
-                    ret = "Session Validation Error"
+                    ret = "Session Validation Error?"
                     return ret
             else:
-                ret = uobj.getouser() + "is not a valid account"
+                ret = uobj.getouser() + "is not a valid account?"
         return(ret)
 
     def saveKey(self, paths):
@@ -172,8 +228,9 @@ class Server:
         print("listening...")
         connected_clients = []
         sessions = []
-        while True:
 
+        counter = 0
+        while True:
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -194,17 +251,20 @@ class Server:
 
                 for s in sessions:
                     if s.conn in clients_allowed:
-                        data = s.conn.recv(self.getBUFFER_SIZE())
+                        data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            keypair = loadKey(path)
-                            cry = Crypt(keypair)
-                            data = cry.decryptit(data)
+                            #keypair = loadKey(path)
+                            #cry = Crypt(keypair)
+                            #data = cry.decryptit(data)
+                            cry = Crypt()
                             ret_data = self.handleReq(data, s)
-                            ret_data = cry.encryptit(ret_data)
-                            s.conn.send(ret_data)
+                            self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
+                            self.active_users.remove(s.getUsername())
                             connected_clients.remove(s.conn)
+                            sessions.remove(s)
+
 
 if __name__ == "__main__":
     s = Server(ADDRESS_OF_CLIENT,5005,1024)

@@ -3,10 +3,14 @@ import sys
 import fileinput
 import re
 import shutil
+import glob
+
 
 class Database:
 
     def __init__(self):
+        self.counter = 0
+        self.counterread = 0
         f = open("./data/logindata.txt","r")
         for line in f:
 
@@ -15,6 +19,9 @@ class Database:
             fname = "./data/" + lp[0] + ".txt"
             nf = open(fname, "a+")
         return
+
+    def getCounter(self):
+        return self.counter
 
     def verify(self, fname, username, passwd):
         found = False
@@ -96,7 +103,6 @@ class Database:
             with open(fname) as infile:
                 for line in infile:
                     lparts = line.split(",")
-                    print("lparts11", lparts)
                     for i in range(len(lparts)):
                         found = usercha.search(lparts[i])
                         if found:
@@ -135,7 +141,6 @@ class Database:
             f = open(fname, 'a')
             if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
                 try:
-                    print("writeText", writeText)
                     f.write(writeText + "\n")
                 except EXPECTED_EXCEPTION_TYPES as e:
                     print("could not write to file %s"%(e))
@@ -149,6 +154,37 @@ class Database:
             print("could not open file %s"%(e))
             return(2)
         return(0)
+
+    def writeMalicious(self, writeText):
+        try:
+            fname= "./datamalicious/userinfo" + str(self.counter) + ".dat"
+            f = open(fname,'w+b')
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    f.write(writeText)
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        self.counter = self.counter + 1
+        return(0)
+
+    def readMalicious(self, fname):
+        commands = bytearray()
+        try:
+            with open(fname, "r+b") as infile:
+                commands = infile.read()
+        except IOError as e:
+            print("could not read from file %s"%(e))
+            return None, 1
+        return commands
 
     def delete(self, recipient, deleteText):
         try:
