@@ -20,7 +20,7 @@ class Client:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
         self.ih = inputHandle()
-        self.crypt = Crypt()
+        self.keygen = GenKeys()
         self.dbc = DatabaseC()
 
         try:
@@ -161,6 +161,7 @@ class Client:
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = cry.hashpwd(userb, pwdb)
+
         lreq = CACM(user,str(pwd),permission) #create the CACM request
         lreq= lreq.encode()
         keypair = crypt.GenKeys()
