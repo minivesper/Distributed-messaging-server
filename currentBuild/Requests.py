@@ -3,7 +3,6 @@ import getpass
 import base64
 from datetime import datetime
 import time
-from dateutil import parser
 # import inquirer
 #from Crypto.Cipher import AES
 from pprint import pprint
@@ -14,9 +13,13 @@ class Request:
     def __init__(self,username,typer):
         self.type = typer
         self.username = username
+        self.time = datetime.now()
 
     def getUsername(self):
         return self.username
+
+    def getTime(self):
+        return str(self.time)
 
     def addchar(self, string):
         a =''
@@ -51,14 +54,12 @@ class LOGN(Request):
     def __init__(self,username,passwd):
         Request.__init__(self,username,"LOGN")
         self.passwd = passwd
-        self.time = datetime.now()
 
     def getPass(self):
         return self.passwd
 
     def getTime(self):
         return str(self.time)
-
 
     def encode(self):
         sendStr = "LOGN|"
@@ -93,7 +94,6 @@ class LOGN(Request):
             c=c+1
 
     def __repr__(self):
-        print(self.getTime())
         return("%s,%s, %s"%(self.getUsername(), self.getPass()), self.getTime())
 
 class UPDT(Request):
@@ -133,7 +133,7 @@ class UPDT(Request):
     def encode(self):
         tagUp = self.interpretTag(self.getTag())
         sendStr = "UPDT|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getouser())+ "|" + self.addchar(tagUp) + "|" + self.addchar(self.getPerm()) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getouser())+ "|" + self.addchar(tagUp) + "|" + self.addchar(self.getPerm()) + "|"+ self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -161,6 +161,10 @@ class UPDT(Request):
                     self.Perm = stream_item
                     stream_item = ""
                     writes=writes+1
+                elif writes == 4:
+                    self.time = stream_item
+                    stream_item = ""
+                    writes=writes+1
                 if stream[c] == "?":
                     return
             else:
@@ -184,7 +188,7 @@ class CACM(Request):
 
     def encode(self):
         sendStr = "CACM|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "|" + self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self,parseStr):
@@ -237,7 +241,7 @@ class SMSG(Request):
 
     def encode(self):
         sendStr = "SMSG|"
-        sendStr +=  self.addchar(self.getUsername()) +"|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) + "?"
+        sendStr +=  self.addchar(self.getUsername()) +"|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) +  "|"+ self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -262,6 +266,10 @@ class SMSG(Request):
                     writes=writes+1
                 elif writes == 2:
                     self.Message = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 3:
+                    self.time = stream_item
                     stream_item = ""
                     writes=writes+1
                 if stream[c] == "?":
@@ -386,7 +394,7 @@ class DMSG(Request):
             self.Message = Message
 
     def encode(self):
-        return "DMSG|" + self.addchar(self.getUsername()) + "|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) + "?"
+        return "DMSG|" + self.addchar(self.getUsername()) + "|" + self.addchar(self.getRecipient()) + "|" + self.addchar(self.getMessage()) + "|" + self.addchar(self.getTime()) + "?"
 
     def decode(self, stream):
         writes = 0
@@ -407,6 +415,10 @@ class DMSG(Request):
                     writes=writes+1
                 elif writes == 2:
                     self.Message = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 3:
+                    self.time = stream_item
                     stream_item = ""
                     writes=writes+1
                 if stream[c] == "?":
@@ -433,7 +445,7 @@ class CMSG(Request):
         Request.__init__(self,Username, "CMSG")
 
     def encode(self):
-        return "CMSG|" + self.addchar(self.getUsername()) + "?"
+        return "CMSG|" + self.addchar(self.getUsername()) + "|" + self.addchar(self.getTime()) + "?"
         #return self.encrypt(string)
 
     def decode(self,stream):
@@ -447,6 +459,10 @@ class CMSG(Request):
             elif stream[c] == "|" or stream[c] == "?":
                 if writes == 0:
                     self.username = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    self.time = stream_item
                     stream_item = ""
                     writes=writes+1
                 if stream[c] == "?":

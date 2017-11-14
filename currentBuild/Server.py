@@ -81,10 +81,7 @@ class Server:
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
-            dt = datetime.strptime(lg.getTime(), "%Y-%m-%d %H:%M:%S.%f")
-            time = dt + timedelta(seconds=5)
-            dtt = datetime.now()
-            if dtt <= time:
+            if(session.datecheck(lg.getTime())):
                 if(session.loginAttempt(lg)):
                     if lg.getUsername() not in self.active_users:
                         self.active_users.append(lg.getUsername())
@@ -143,34 +140,46 @@ class Server:
             if data[6] == None:
                 ret = "No messages"
             cm.decode(data)
-            if(session.check(cm)):
-                messages = []
-                messages, error = self.db.read(str(cm.getUsername()))
-                ret = self.e.read_err(error)
-                if(error == 0):
-                    rm = RMSG(None, None)
-                    ret = rm.encode(messages)
+            if(session.datecheck(cm.getTime())):
+                if(session.check(cm)):
+                    messages = []
+                    messages, error = self.db.read(str(cm.getUsername()))
+                    ret = self.e.read_err(error)
+                    if(error == 0):
+                        rm = RMSG(None, None)
+                        ret = rm.encode(messages)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            if(session.check(dobj)):
-                error = self.db.delete(dobj.getUsername(), str(dobj))
-                ret = self.e.delete_err(error)
+            if(session.datecheck(dobj.getTime())):
+                if(session.check(dobj)):
+                    error = self.db.delete(dobj.getUsername(), str(dobj))
+                    ret = self.e.delete_err(error)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="SMSG":
             sobj = SMSG(None, None, None)
             sobj.decode(data)
             if(self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())):
-                if(session.check(sobj)):
-                    error = self.db.write(sobj.getRecipient(), str(sobj))
-                    ret = self.e.send_err(error)
-                    return(ret)
-                    print("message sent")
+                if(session.datecheck(sobj.getTime())):
+                    if(session.check(sobj)):
+                        error = self.db.write(sobj.getRecipient(), str(sobj))
+                        ret = self.e.send_err(error)
+                        return(ret)
+                        print("message sent")
+                    else:
+                        ret = "Session Validation error?"
+                        return ret
                 else:
-                    ret = "Session Validation error?"
+                    ret = "Timed out"
                     return ret
             else:
                 ret = sobj.getRecipient() + " is not a valid account?"
@@ -224,7 +233,9 @@ class Server:
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
+                            self.active_users.remove(s.getUsername())
                             connected_clients.remove(s.conn)
+                            sessions.remove(s)
 
 
 if __name__ == "__main__":

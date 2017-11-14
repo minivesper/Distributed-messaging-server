@@ -110,6 +110,7 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
+            print(req)
             self.sendAll(req,self.getBUFFER_SIZE())
             data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)
@@ -150,10 +151,11 @@ class Client:
             return None
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
-            sys.exit(1)
+            user = self.createUser()
             return user
         else:
-            print(data)
+            print("account created, please login")
+            user = self.createUser()
             return user
 
     def inputCredentials(self):

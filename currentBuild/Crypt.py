@@ -2,9 +2,7 @@ import socket
 import getpass
 import base64
 from cryptography.fernet import Fernet
-#from Crypto.Cipher import AES
 from pprint import pprint
-import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
