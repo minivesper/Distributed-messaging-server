@@ -60,14 +60,14 @@ class Client:
 
 
     def sendAll(self,reqstr,buffsize):
-        cry = Crypt()
+        cry = OldCrypt()
         req = cry.encryptit(reqstr)
         self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
         self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
 
     def recieveAll(self,buffsize):
         retdata = ""
-        cry = Crypt()
+        cry = OldCrypt()
         data = bytearray()
         packetsize = self.getSocket().recv(4)
         while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
