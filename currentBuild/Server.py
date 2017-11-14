@@ -1,5 +1,7 @@
 import socket
 import sys
+import fileinput
+import os
 import select
 from Session import *
 from Requests import *
@@ -147,18 +149,26 @@ class Server:
                 ret = uobj.getouser() + "is not a valid account"
         return(ret)
 
-    def run(self):
-        if(there is a key):
-            readstuff
-            ncry = Crypt()
-            loadit
+    def saveKey(self, paths):
+        #after recieving a public key save it in "data/serverkeys/username.txt"
+        return
+
+    def loadKey(self, paths):
+        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+            f = open(paths)
+            keypair = RSA.importKey(f.read())
+            return keypair
         else:
             ncry = NewCrypt(1024)
-            print(ncry.random_gen)
-            print("generated new keypair with publickey:")
-            print(ncry.my_keypair.exportKey().decode()[31:-29])
-            print("")
-            saveit
+            print("generated new keypair")
+            keypair = ncry.my_keypair.exportKey('PEM')
+            self.db.writek('serverkeys/server', keypairw)
+            pubkey = ccry.my_pubkey.exportKey('PEM')
+            self.db.writek('clientkeys/server', pubkeyw)
+            return keypair
+
+    def run(self):
+        path = "data/serverkeys/server.txt"
         print("listening...")
         connected_clients = []
         sessions = []
@@ -173,7 +183,6 @@ class Server:
                 connected_clients.append(s.conn)
                 #swap public keys
                 print('Connection address:', addr)
-                print('Client @' + addr + ' has public key' + clientkey)
 
             clients_allowed = []
             try:
@@ -187,7 +196,8 @@ class Server:
                     if s.conn in clients_allowed:
                         data = s.conn.recv(self.getBUFFER_SIZE())
                         if data:
-                            cry = OldCrypt()
+                            keypair = loadKey(path)
+                            cry = Crypt(keypair)
                             data = cry.decryptit(data)
                             ret_data = self.handleReq(data, s)
                             ret_data = cry.encryptit(ret_data)

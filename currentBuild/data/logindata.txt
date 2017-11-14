@@ -7,3 +7,7 @@ abigail,am9090OH*,1
 jo,b'am9090OH*',1
 ha,b'mxHkr5LOvJZByM5WlNk2X1tNFNjn_preNcq5FrG6XBI=',1
 hi,b'N1VSXmJp_l_IjH2D5fJ8oVDSiAEbMhmvKyKp65QXqDU=',1
+k,b'HQ873gBLfQyeae4ZKARxeubXW9kMtxV8HswOG0R9qTU=',1
+joke,b'yt2BNlzSOW2Qn-oP2b5Bd403wqICxxolWDGAiRKajYA=',1
+puff,b'-r1KOOpaSQ3VdJHucvwHqMnjwx02IOebi1-mq-DkhAo=',1
+puffy,b'k9ncb2KjN3ssgqY5-zpGu5rauk4gp4hqNvXs5rIVYuA=',1

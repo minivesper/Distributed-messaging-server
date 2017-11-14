@@ -16,92 +16,37 @@ key = "qgIbhaErnQ7jntxVgEVo5ReNKFZEASe-TTAh3Q8-uZU="
 
 cipher_key = Fernet(key)
 
-class NewCrypt:
+class NewCrypt:#Randomly Generateing Asymetric Keys
 
     def __init__(self, keylen):
-        #self.my_msg = my_msg.encode('utf-8')
-        self.random_gen = Random.new().read
         self.my_keypair = self.keygen(keylen)
         self.my_pubkey = self.my_keypair.publickey()
         return
 
-    def run(self):
-        self.exchangeKeys()
-        #reciev their pulbic before this
-        sig = self.getSignature()
-        enc = self.encPub(rec_pub_key)
-        #send sig and enc to the reciever somewhere
-        #recieve new msg with a signature and publickey
-        dec = self.decPri(sender_msg)
-        if(self.valSignature(dec, sender_sig, sender_pubkey)):
-            print ("Signature valid")
-            print ("The message is:")
-            print (dec)
-            return
-        else:
-            print ("Signature missmatch")
-            return
-        return
-
-
     def keygen(self, keylen):
-        this_keypair = RSA.generate(keylen, self.random_gen)
-        #self.keypair_bob = RSA.generate(keylen, random_gen)
+        random_gen = Random.new().read
+        this_keypair = RSA.generate(keylen, random_gen)
         return this_keypair
 
     def exchangeKeys(self):
-        #In practice public keys are sent accross the wire
+        #in practice will exchange public keys, honestly not sure if this should even be in here
         return
 
-    def getSignature(self):
-        # Generate digital signatures using private keys...
-        hash_of_my_msg = MD5.new(self.my_msg).digest()
-        my_signature = self.my_keypair.sign(hash_of_my_msg, '')
-        return my_signature
-
-    def encPub(self, rec_key):
-        # Encrypt messages using the other party's public key...
-        encrypted_for_rec = self.rec_key.encrypt(self.my_msg, 32)
-        return encrypted_for_rec
-
-    def decPri(self, encrypted_msg):
-        # Decrypt messages using own private keys...
-        decrypted_msg = self.my_keypair.decrypt(encrypted_msg)
-        return decrypted_msg
-
-    def valSignature(self, decrypted_msg, sender_sig, sender_pubkey):
-        # Signature validation and console output...
-        ret = False
-        hash_msg_decrypted = MD5.new(decrypted_msg).digest()
-        if sender_pubkey.verify(hash_msg_decrypted, sender_sig):
-            ret = True
-            return ret
-        else:
-            ret = False
-            return ret
-
-class Crypt:
+class Crypt:#Asymetric Encryption
 
     def __init__(self, keypair):
-        #self.my_msg = my_msg.encode('utf-8')
         self.my_keypair = keypair
         self.my_pubkey = self.my_keypair.publickey()
         return
 
-    def exchangeKeys(self):
-        #In practice public keys are sent accross the wire
-        return
-
-    def getSignature(self):
-        # Generate digital signatures using private keys...
-        hash_of_my_msg = MD5.new(self.my_msg).digest()
-        my_signature = self.my_keypair.sign(hash_of_my_msg, '')
+    def getSignature(self, msg):
+        hash_of_my_msg = MD5.new(msg).digest()
+        my_signature = self.keypair.sign(hash_of_my_msg, '')
         return my_signature
 
-    def encPub(self, rec_key):
-        # Encrypt messages using the other party's public key...
-        encrypted_for_rec = self.rec_key.encrypt(self.my_msg, 32)
-        return encrypted_for_rec
+    def encPub(self, msg, thier_pubkey):
+        encrypted_for_them = thier_pubkey.encrypt(msg, 32)
+        return encrypted_for_them
 
     def decPri(self, encrypted_msg):
         # Decrypt messages using own private keys...
@@ -119,7 +64,15 @@ class Crypt:
             ret = False
             return ret
 
-class OldCrypt:
+    def encryptit(self, msg, thier_pubkey):
+        sig = getSignature(msg)
+        enc = encPub(msg, thier_pubkey)
+        return sig,enc
+
+    def decryptit(self, enc, sender_sig, sender_pubkey):
+        return
+
+class OldCrypt:#Fernet Key Encryption As Well As Hashing
     def __init__(self):
         return
 
