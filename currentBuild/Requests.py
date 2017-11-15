@@ -98,16 +98,17 @@ class LOGN(Request):
 
 
 class PUBK(Request):
-    def __init__(self,username,pubkey):
-        Request.__init__(self,username, "PUBK")
+    def __init__(self,username, pubkey):
+        Request.__init__(self,username,"PUBK")
         self.pubkey = pubkey
+        self.username = username
 
     def getpubkey(self):
         return self.pubkey
 
     def encode(self):
         sendStr = "PUBK|"
-        sendStr +=  self.addchar(self.getUsername()) + "|" + self.addchar(self.getpubkey) + "?"
+        sendStr +=  self.addchar(self.getUsername()) + "|" + self.addchar(self.getpubkey()) + "|" + self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -128,8 +129,13 @@ class PUBK(Request):
                     writes=writes+1
                 elif writes == 1:
                     self.pubkey = stream_item
+                    print(self.pubkey)
                     stream_item = ""
                     writes=writes+1
+                elif writes == 2:
+                    self.time = stream_item
+                    stream_item = ""
+                    writes = writes+1
                 if stream[c] == "?":
                     return
             else:
@@ -137,7 +143,7 @@ class PUBK(Request):
             c=c+1
 
     def __repr__(self):
-        return("%s,%s, %s"%(self.getUsername(), self.getpubkey()))
+        return("%s,%s,%s"%(self.getUsername(),self.getpubkey(), self.getTime()))
 
 
 class UPDT(Request):
@@ -219,10 +225,14 @@ class UPDT(Request):
         return("%s, %s, %s, %s"%(self.getUsername(), self.getouser(), self.getTag(), self.getPermis()))
 
 class CACM(Request):
-    def __init__(self, username, password, permission):
+    def __init__(self, username, password, permission, pubk):
         Request.__init__(self,username,"CACM")
         self.password = password
         self.permission = permission
+        self.pubk = pubk
+
+    def getpubkey(self):
+        return self.pubk
 
     def getPass(self):
         return self.password
@@ -232,41 +242,78 @@ class CACM(Request):
 
     def encode(self):
         sendStr = "CACM|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "|" + self.addchar(self.getTime()) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|" + self.addchar(str(self.getPermis())) + "|" + self.addchar(self.getpubkey().decode()) + "|" + self.addchar(self.getTime()) + "?"
         return sendStr
 
-    def decode(self,parseStr):
-        parselist = []
-        for i in range(len(parseStr)):
-            if parselist:
-                if parseStr[i] == "?":
-                    if parseStr[i-1] != "\\":
-                        parselist.append(parseStr[b+1:])
-                else:
-                    if parseStr[i] == "|":
-                        if parseStr[i-1] != "\\":
-                            parselist.append(parseStr[b+1:i])
-                            b = i
-                        elif parseStr[i-1] == "\\":
-                            if parseStr[i-1] == "\\" and parseStr[i-2] == "\\":
-                                parselist.append(parseStr[b+1:i])
-                                b = i
+    def decode(self,stream):
+        writes = 0
+        stream_item = ""
+        c = 5
+        while c  < len(stream):
+            if stream[c] == "\\" and stream[c+1] == ",":
+                stream_item += stream[c] + stream[c+1]
+                c = c+1
+            elif stream[c] == "\\":
+                stream_item += stream[c+1]
+                c=c+1
+            elif stream[c] == "|" or stream[c] == "?":
+                if writes == 0:
+                    self.username = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    self.password = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 2:
+                    self.permission = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 3:
+                    self.pubk = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 4:
+                    self.time = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                if stream[c] == "?":
+                    return
             else:
-                if parseStr[i] == "|":
-                    if parseStr[i-1] != "\\":
-                        parselist.append(parseStr[0:i])
-                        b=i
-        i = 0
-        print(parselist)
-        while i< len(parselist):
-            parselist[i] = self.removechar(parselist[i])
-            i +=1
-        self.username = parselist[1]
-        self.password = parselist[2]
-        self.permission = parselist[3]
+                stream_item += stream[c]
+            c=c+1
 
-    def __repr__(self):
-        return("%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis()))
+        def __repr__(self):
+            return("%s,%s,%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis(), self.getpubk(), self.getTime()))
+        #
+        # parselist = []
+        # for i in range(len(parseStr)):
+        #     if parselist:
+        #         if parseStr[i] == "?":
+        #             if parseStr[i-1] != "\\":
+        #                 parselist.append(parseStr[b+1:])
+        #         else:
+        #             if parseStr[i] == "|":
+        #                 if parseStr[i-1] != "\\":
+        #                     parselist.append(parseStr[b+1:i])
+        #                     b = i
+        #                 elif parseStr[i-1] == "\\":
+        #                     if parseStr[i-1] == "\\" and parseStr[i-2] == "\\":
+        #                         parselist.append(parseStr[b+1:i])
+        #                         b = i
+        #     else:
+        #         if parseStr[i] == "|":
+        #             if parseStr[i-1] != "\\":
+        #                 parselist.append(parseStr[0:i])
+        #                 b=i
+        # i = 0
+        # print(parselist)
+        # while i< len(parselist):
+        #     parselist[i] = self.removechar(parselist[i])
+        #     i +=1
+        # self.username = parselist[1]
+        # self.password = parselist[2]
+        # self.permission = parselist[3]
 
 
 class SMSG(Request):
