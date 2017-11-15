@@ -143,7 +143,6 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            print(req)
             self.sendAll(None,req,self.getBUFFER_SIZE())
             sig,data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)

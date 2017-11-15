@@ -76,7 +76,6 @@ class Server:
         if packettype == 1:
             packetsize = int.from_bytes(connection.recv(4),'little')
             while packetsize > 0:
-                print(packetsize)
                 read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
                 if connection in read_sockets:
                     if(packetsize > 1024):
@@ -90,7 +89,6 @@ class Server:
             return None,data.decode()
 
         elif packettype == 0:
-            print("boop")
             ret = []
             for i in range(2):
                 retdata = ""
@@ -186,8 +184,6 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
-            print("data", data)
-            print(data[6])
             if data[6] == None:
                 ret = "No messages"
             cm.decode(data)
@@ -297,7 +293,6 @@ class Server:
                 for s in sessions:
                     if s.conn in clients_allowed:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
-                        print(tuple(sig))
                         if data:
                             #keypair = loadKey(path)
                             #cry = Crypt(keypair)
