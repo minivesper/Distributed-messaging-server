@@ -30,7 +30,7 @@ class Database:
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username and lparts[1] == passwd):
+                    if(lparts[0] == username and lparts[1][:-1] == passwd):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
                 print("could not read from file %s"%(e))

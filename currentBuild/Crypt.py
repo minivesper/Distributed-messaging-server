@@ -30,59 +30,6 @@ class GenKeys:#Randomly Generateing Asymetric Keys
     def exchangeKeys(self):
         #in practice will exchange public keys, honestly not sure if this should even be in here
         return
-#
-# class asymetricSuite:
-#     def __init__(self, keypair, message):
-#         self.keypair = keypair
-#         self.pubkey = self.keypair.publickey()
-#         self.message = message
-#
-#     #use these two functions to encrypt and decrypt the message being sent to one another
-#     def encrypt(self, pubkey_o):
-#         # Encrypt messages using the other party's public key...
-#         enc_data = self.pubkey.encrypt(self.verobj, 32)
-#         return enc_data
-#
-#     def decrypt(self, message):
-#         # Decrypt messages using own private keys...
-#         decry_msg = self.keypair.decrypt(message)
-#         return decry_message
-#
-# #the point of the signature is to verify that the message has not been modified once sent.
-#     def genSig(self):
-#         # Generate digital signatures using private keys...
-#         hash_request = MD5.new(self.message).digest()
-#         signature = self.keypair.sign(hash_request, '')
-#         return signature #this signature needs to be added to any request / message being sent
-#
-#     def valSignature(self, decry_msg, sender_sig, sender_pubkey):
-#         # Signature validation...
-#         ret = False
-#         hash_decryp_msg = MD5.new(decrypted_msg).digest()
-#         if sender_pubkey.verify(hash_decry_msg, sender_sig):
-#             ret = True
-#             return ret
-#         else:
-#             ret = False
-#             return ret
-#
-#     def run(self):
-#         self.exchangeKeys()
-#         #reciev their pulbic before this
-#         sig = self.getSignature()
-#         enc = self.encPub(rec_pub_key)
-#         #send sig and enc to the reciever somewhere
-#         #recieve new msg with a signature and publickey
-#         dec = self.decPri(sender_msg)
-#         if(self.valSignature(dec, sender_sig, sender_pubkey)):
-#             print ("Signature valid")
-#             print ("The message is:")
-#             print (dec)
-#             return
-#         else:
-#             print ("Signature missmatch")
-#             return
-#         return
 
 class asymetricSuite:
 
@@ -123,8 +70,6 @@ class asymetricSuite:
 
     def decryptit(self, enc, sender_sig, sender_pubkey):
         return
-
-
 
 class FernetCrypt:#Fernet Key Encryption As Well As Hashing
     def __init__(self):
