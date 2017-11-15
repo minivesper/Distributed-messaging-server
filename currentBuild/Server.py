@@ -56,34 +56,61 @@ class Server:
     def getSocket(self):
         return self.socket
 
-    def sendAll(self,reqstr,connection,buffsize):
-        cry = FernetCrypt()
-        req = cry.encryptit(reqstr)
-        connection.send((len(req)).to_bytes(4,'little'))
-        connection.send(req)
+    def sendAll(self,sig,reqstr,connection,buffsize):
+        req = reqstr.encode('utf-8')
+        if not sig:
+            connection.send((1).to_bytes(4,'little'))
+            connection.send((len(req)).to_bytes(4,'little'))
+            connection.send(req)
+        else:
+            connection.send((0).to_bytes(4,'little'))
+            connection.send((len(req)).to_bytes(4,'little'))
+            connection.send(req)
+            connection.send((len(sig)).to_bytes(4,'little'))
+            connection.send(sig)
 
     def recieveAll(self,connection,buffsize):
         retdata = ""
-        cry = FernetCrypt()
         data = bytearray()
-        packetsize = connection.recv(4)
-        if int.from_bytes(packetsize, 'little') ==0:
-            return None
-        print(sys.getsizeof(data), int.from_bytes(packetsize,'little'))
-        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
-            if connection in read_sockets:
-                data.extend(connection.recv(self.getBUFFER_SIZE()))
-            else:
-                return "TMOT"
-        retdata = cry.decryptit(bytes(data)).decode()
-        return retdata
+        packettype = int.from_bytes(connection.recv(4), 'little')
+        if packettype == 1:
+            packetsize = int.from_bytes(connection.recv(4),'little')
+            while packetsize > 0:
+                read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+                if connection in read_sockets:
+                    if(packetsize > 1024):
+                        singlerec = connection.recv(self.getBUFFER_SIZE())
+                    else:
+                        singlerec = connection.recv(packetsize)
+                        packetsize -= sys.getsizeof(singlerec)
+                    data.extend(singlerec)
+                else:
+                    return "timeout"
+            return None,data.decode()
 
-
+        elif packettype == 0:
+            ret = []
+            for i in range(2):
+                retdata = ""
+                data = bytearray()
+                packetsize = int.from_bytes(connection.recv(4),'little')
+                while packetsize > 0:
+                    read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+                    if connection in read_sockets:
+                        if(packetsize > 1024):
+                            singlerec = connection.recv(self.getBUFFER_SIZE())
+                        else:
+                            singlerec = connection.recv(packetsize)
+                            packetsize -= sys.getsizeof(singlerec)
+                        data.extend(singlerec)
+                    else:
+                        return "timeout"
+                ret.append(data)
+            print(ret)
+            return (ret[1].decode(),''),ret[0].decode()
 
     def handleReq(self, data, session):
         ret = "nothing to see here"
-
         if(data[0:4] == "LOGN"):
             lg = LOGN(None, None)
             lg.decode(data)
@@ -155,8 +182,6 @@ class Server:
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
-            print("data", data)
-            print(data[6])
             if data[6] == None:
                 ret = "No messages"
             cm.decode(data)
@@ -265,17 +290,16 @@ class Server:
 
                 for s in sessions:
                     if s.conn in clients_allowed:
-                        data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
+                        sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            #keypair = loadKey(path)
-                            #cry = Crypt(keypair)
-                            #data = cry.decryptit(data)
-                            cry = FernetCrypt()
+                            data = s.sDecrypt(sig,data)
                             ret_data = self.handleReq(data, s)
-                            self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
+                            sig,ret_data = s.sEncrypt(ret_data)
+                            self.sendAll(sig,ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
-                            self.active_users.remove(s.getUsername())
+                            if s.getUsername() in self.active_users:
+                                self.active_users.remove(s.getUsername())
                             connected_clients.remove(s.conn)
                             sessions.remove(s)
 
