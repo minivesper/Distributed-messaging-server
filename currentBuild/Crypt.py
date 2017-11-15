@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class GenKeys:#Randomly Generateing Asymetric Keys
 
-    def __init__(self, keylen):
+    def __init__(self):
         self.my_keypair = self.keygen()
         self.my_pubkey = self.my_keypair.publickey()
         return
