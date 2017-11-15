@@ -109,8 +109,6 @@ class Server:
             print(ret)
             return (ret[1].decode(),''),ret[0].decode()
 
-
-
     def handleReq(self, data, session):
         ret = "nothing to see here"
         if(data[0:4] == "LOGN"):
@@ -251,7 +249,7 @@ class Server:
         return
 
     def loadKey(self, paths):
-        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+        if(os.path.exists(paths) and os.stat(paths).st_size != 0):
             f = open(paths)
             keypair = RSA.importKey(f.read())
             return keypair
@@ -294,12 +292,10 @@ class Server:
                     if s.conn in clients_allowed:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            #keypair = loadKey(path)
-                            #cry = Crypt(keypair)
-                            #data = cry.decryptit(data)
-                            cry = FernetCrypt()
+                            data = s.sDecrypt(sig,data)
                             ret_data = self.handleReq(data, s)
-                            self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())
+                            sig,ret_data = s.sEncrypt(ret_data)
+                            self.sendAll(sig,ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             if s.getUsername() in self.active_users:
