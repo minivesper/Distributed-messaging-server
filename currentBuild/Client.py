@@ -60,7 +60,7 @@ class Client:
             print(returnreq)
 
     def sendAll(self,reqstr,buffsize):
-        cry = FernetasymmetricSuite()
+        cry = FernetCrypt()
         req = cry.encryptit(reqstr)
         self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
         self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
@@ -113,11 +113,28 @@ class Client:
 
         if(req != ""):
             print(req)
-            self.sendAll(req,self.getBUFFER_SIZE())
-            data = self.recieveAll(self.getBUFFER_SIZE())
-            self.handleReturn(data)
+            path = "data/clientkeys/server.txt"
+            thier_pubkey = loadKey(path)
+            sig,enc = cry.encryptit(req, thier_pubkey)
+            self.sendAll(req,self.getBUFFER_SIZE()) #send enc and sig
+            data = self.recieveAll(self.getBUFFER_SIZE()) #recieve an enc and sig
+            data,val = cry.decryptit(data, sig, thier_pubkey)
+            if(val):
+                self.handleReturn(data)
+            else:
+                print("Invalid signature: This is a phoney server!")
+                #return None
         else:
             print("%s is not a valid request type"%(inp_str))
+
+    def loadKey(self, path):
+        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+            f = open(path)
+            key = RSA.importKey(f.read())
+            return key
+        else:
+            print("You are missing either your own or the server's keys") #if this happens it means that they have never exchanged keys with the server, or there isnt a username keypair on the machine
+            return None#crash the program i guess idk
 
     def run(self, currentUsername):
         while True:
@@ -125,8 +142,6 @@ class Client:
             self.handleCommand(inp, currentUsername)
 
     def createUser(self):
-        #generate keypairs for encryption
-        #and swap public keys
         user = None
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
@@ -150,7 +165,7 @@ class Client:
             #self.getSocket().sendto(pubkey,(self.getTCP_IP(), self.getTCP_PORT()))
             #data = self.getSocket().recv(self.getBUFFER_SIZE())
             #server_pubkey = data
-            self.db.writek('serverkeys/' + user, pubkey)
+            self.db.writek('serverkeys/' + user, pubkey) # this shouldnt be here if the publickey swap happens
             return user
         else:
             print("LOGN or CACM dummy! not %s"%(inp))
@@ -162,16 +177,21 @@ class Client:
         pwdb = pwd.encode('utf-8')
         pwd = cry.hashpwd(userb, pwdb)
 
-        lreq = CACM(user,str(pwd),permission) #create the CACM request
+        lreq = CACM(user,str(pwd),permission) #create the CACM request needs pubkey too
         lreq= lreq.encode()
-        keypair = crypt.GenKeys()
-        dbc.writeKey(user, keypair)
-        pubkey_c = dbc.readKey(user,keypair)
-        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server
+        ncry = GenKeys()
+        print("generated new keypair")
+        keypair = ncry.my_keypair.exportKey('PEM')
+        self.dbc.writek('clientkeys/' + user, keypair)
+        #dbc.writeKey(user, keypair)
+        #pubkey_c = dbc.readKey(user,keypair)
+        pubkey_c = ncry.my_pubkey
+        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server (not doing this anymore)
         preq = preq.encode()
-
+        lreq = cry.encryptit(lreq)
         self.sendAll(lreq,self.getBUFFER_SIZE())
         data = self.recieveAll(self.getBUFFER_SIZE())
+        data = cry.decryptit(data)
         if(data == "username already exists, please enter a new username"):
             print(data)
             user = self.createUser()
@@ -186,31 +206,35 @@ class Client:
             return user
 
     def inputCredentials(self):
-        f = open("data/clientkeys/server.txt")
-        thier_pubkey = RSA.importKey(f.read())
+        path = "data/clientkeys/server.txt"
+        thier_pubkey = loadKey(path)
         user = input("Username: ")
-        f = open("data/clientkeys/" + user + ".txt")
-        keypairr = RSA.importKey(f.read())
-        #keypairr = self.db.readk('serverkeys/server')
+        path = ("data/clientkeys/" + user + ".txt")#if this doesnt exist there should be no login/we need to handle loging in on diff machines
+        keypairr = loadKey(path)
         cry = asymmetricSuite(keypairr)
         pwd = getpass.getpass("Password for " + user + ": ")
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        #pwd = cry.hashpwd(userb,pwdb)
         lreq = LOGN(user,str(pwdb))
         lreq = lreq.encode()
-        self.sendAll(lreq,self.getBUFFER_SIZE())
-        data = self.recieveAll(self.getBUFFER_SIZE())
-        if(data == "Not a valid login?"):
-            print(data)
-            return None
-        elif (data == "Already logged in byeeee"):
-            print(data)
-            self.getSocket().close()
-            sys.exit(1)
+        sig,enc = cry.encryptit(lreq, thier_pubkey)
+        self.sendAll(enc,self.getBUFFER_SIZE()) #pass in the sig too
+        data = self.recieveAll(self.getBUFFER_SIZE()) #should give sig too
+        data,val = cry.decryptit(data, sig, thier_pubkey)
+        if(val):
+            if(data == "Not a valid login?"):
+                print(data)
+                return None
+            elif (data == "Already logged in byeeee"):
+                print(data)
+                self.getSocket().close()
+                sys.exit(1)
+            else:
+                print(data)
+                return user
         else:
-            print(data)
-            return user
+            print("Invalid signature: This is a phoney server!")
+            return None
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):

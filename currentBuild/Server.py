@@ -232,9 +232,9 @@ class Server:
             ncry = GenKeys(1024)
             print("generated new keypair")
             keypair = ncry.my_keypair.exportKey('PEM')
-            self.db.writek('serverkeys/server', keypairw)
+            self.db.writek('serverkeys/server', keypair)
             pubkey = ccry.my_pubkey.exportKey('PEM')
-            self.db.writek('clientkeys/server', pubkeyw)
+            self.db.writek('clientkeys/server', pubkey)
             return keypair
 
     def run(self):
