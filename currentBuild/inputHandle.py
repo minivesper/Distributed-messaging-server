@@ -23,6 +23,14 @@ class inputHandle:
         msgtxt = input("what send: ")
         return sendTo,msgtxt
 
+    def credHandle(self):
+        user = input("Username: ")
+        pwd = getpass.getpass("Password for " + user + ": ")
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        return user,pwd,userb,pwdb
+
+
     def updateHandle(self):
         userupdt = input("which user do you want to update? ")
         permname = input("what permission do you want to change? ")

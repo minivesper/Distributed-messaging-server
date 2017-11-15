@@ -15,33 +15,42 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 #generate public/private key pairs
 #note: keypair is the private key
 
+key = "qgIbhaErnQ7jntxVgEVo5ReNKFZEASe-TTAh3Q8-uZU="
+
+cipher_key = Fernet(key)
+
 class GenKeys:#Randomly Generateing Asymetric Keys
 
     def __init__(self):
         self.my_keypair = self.keygen()
         self.my_pubkey = self.my_keypair.publickey()
-        return
+
 
     def keygen(self):
         random_gen = Random.new().read
         this_keypair = RSA.generate(1024, random_gen)
         return this_keypair
 
-    def exchangeKeys(self):
-        #in practice will exchange public keys, honestly not sure if this should even be in here
-        return
+    def getkeypair(self):
+        return self.my_keypair
+
+    def getpubkey(self):
+        return self.my_pubkey
+
 
 class asymetricSuite:
 
     def __init__(self, keypair):
         self.my_keypair = keypair
         self.my_pubkey = self.my_keypair.publickey()
-        return
 
     def getSignature(self, msg):
         hash_of_my_msg = MD5.new(msg).digest()
         my_signature = self.keypair.sign(hash_of_my_msg, '')
         return my_signature
+
+    def getpubkey(self):
+        return self.my_pubkey
 
     def encPub(self, msg, thier_pubkey):
         encrypted_for_them = thier_pubkey.encrypt(msg, 32)

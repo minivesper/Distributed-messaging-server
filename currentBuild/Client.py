@@ -5,6 +5,7 @@ import getpass
 import select
 # import inquirer
 from DatabaseC import *
+from errHandle import *
 from Crypt import *
 from Requests import *
 from pprint import pprint
@@ -20,8 +21,12 @@ class Client:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
         self.ih = inputHandle()
-        self.keygen = GenKeys()
+        self.fc = FernetCrypt()
         self.dbc = DatabaseC()
+        self.e = errHandle()
+        self.c_keys = GenKeys()
+        self.asym = asymetricSuite(self.c_keys.my_pubkey)
+        #self.asym = asymetricSuite(keypair)
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -55,6 +60,13 @@ class Client:
             rm.decode(returnreq)
             self.cachedMessages = rm.messages
             print(rm)
+        elif(returnreq[0:4] == "PUBK"):
+            print("here")
+            print("req", returnreq)
+            pk = PUBK(None,None)
+            pk.decode(returnreq)
+            self.dbc.writesk(pk.getpubkey())
+            return
         else:
             print(returnreq)
 
@@ -173,6 +185,7 @@ class Client:
             self.handleCommand(inp, currentUsername)
 
     def createUser(self):
+        #generate keypairs for encryption and swap public keys
         user = None
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
@@ -203,56 +216,51 @@ class Client:
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        cry = FernetCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb, pwdb)
+        pwd = self.fc.hashpwd(userb, pwdb)
 
-        lreq = CACM(user,str(pwd),permission) #create the CACM request needs pubkey too
-        lreq= lreq.encode()
-        ncry = GenKeys()
-        print("generated new keypair")
-        keypair = ncry.my_keypair.exportKey('PEM')
-        self.dbc.writek('clientkeys/' + user, keypair)
-        #dbc.writeKey(user, keypair)
-        #pubkey_c = dbc.readKey(user,keypair)
-        pubkey_c = ncry.my_pubkey
-        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server (not doing this anymore)
-        preq = preq.encode()
-        lreq = cry.encryptit(lreq)
-        self.sendAll(None,lreq,self.getBUFFER_SIZE())
-        sig,data = self.recieveAll(self.getBUFFER_SIZE())
-        data = cry.decryptit(data)
-        if(data == "username already exists, please enter a new username"):
-            print(data)
-            user = self.createUser()
-            return None
-        if permission == "2":
-            print("Your credentials have been sent to admin, checkback later for approval")
-            user = self.createUser()
-            return user
-        else:
-            print("account created, please login")
-            user = self.createUser()
-            return user
+        u_keypair = GenKeys()
+        u_keypairs = u_keypair.getpubkey().exportKey('PEM')
+        error = self.dbc.writek(user, u_keypairs)
+        ret = self.e.send_err(error) #need to come back to this ??
+        #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
+
+        if error == 0:
+            lreq = CACM(user,str(pwd),permission, u_keypairs)
+            lreq= lreq.encode()
+            #encode this messags with FernetCrypt--which I think will still be in the sendAll and recAll
+            self.sendAll(None, lreq,self.getBUFFER_SIZE())
+            sig, data = self.recieveAll(self.getBUFFER_SIZE())
+            self.handleReturn(data)
+            if(data == "username already exists, please enter a new username"):
+                print(data)
+                user = self.createUser()
+                return None
+            if permission == "2":
+                print("Your credentials have been sent to admin, checkback later for approval")
+                user = self.createUser()
+                return user
+            else:
+                print("account created, please login")
+                user = self.createUser()
+                return user
 
     def inputCredentials(self):
-        path = "data/clientkeys/server.txt"
-        thier_pubkey = loadKey(path)
-        user = input("Username: ")
-        path = ("data/clientkeys/" + user + ".txt")#if this doesnt exist there should be no login/we need to handle loging in on diff machines
-        keypairr = loadKey(path)
-        cry = asymmetricSuite(keypairr)
-        pwd = getpass.getpass("Password for " + user + ": ")
-        userb = user.encode('utf-8')
-        pwdb = pwd.encode('utf-8')
-        lreq = LOGN(user,str(pwdb))
-        lreq = lreq.encode()
-        sig,enc = cry.encryptit(lreq, thier_pubkey)
-        self.sendAll(tup[0].encode('utf-8'),lreq,self.getBUFFER_SIZE())
-        sig,data = self.recieveAll(self.getBUFFER_SIZE())
-        data,val = cry.decryptit(data, sig, thier_pubkey)
-        if(val):
+        user, pwd, userb, pwdb = self.ih.credHandle()
+        keypair = self.dbc.readk(user)
+        if keypair == 2:
+            print("username does not exist")
+            return None
+        else:
+            asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
+            pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
+            lreq = LOGN(user,str(pwd))
+            lreq = lreq.encode() #changes string to bytes
+            sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
+
+            self.sendAll(sig, enc_lreq,self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
+            sig, data = self.recieveAll(self.getBUFFER_SIZE())
             if(data == "Not a valid login?"):
                 print(data)
                 return None
@@ -263,9 +271,6 @@ class Client:
             else:
                 print(data)
                 return user
-        else:
-            print("Invalid signature: This is a phoney server!")
-            return None
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
