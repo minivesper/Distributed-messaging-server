@@ -224,7 +224,7 @@ class Server:
         return
 
     def loadKey(self, paths):
-        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+        if(os.path.exists(paths) and os.stat(paths).st_size != 0):
             f = open(paths)
             keypair = RSA.importKey(f.read())
             return keypair
@@ -238,7 +238,7 @@ class Server:
             return keypair
 
     def run(self):
-        path = "data/serverkeys/server.txt"
+        path = "./data/serverkeys/server.txt"
         print("listening...")
         connected_clients = []
         sessions = []

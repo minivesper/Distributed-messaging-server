@@ -116,8 +116,8 @@ class Client:
             path = "data/clientkeys/server.txt"
             thier_pubkey = loadKey(path)
             sig,enc = cry.encryptit(req, thier_pubkey)
-            self.sendAll(req,self.getBUFFER_SIZE()) #send enc and sig
-            data = self.recieveAll(self.getBUFFER_SIZE()) #recieve an enc and sig
+            self.sendAll(sig[0],enc,self.getBUFFER_SIZE()) #send enc and sig
+            sig,data = self.recieveAll(self.getBUFFER_SIZE()) #recieve an enc and sig
             data,val = cry.decryptit(data, sig, thier_pubkey)
             if(val):
                 self.handleReturn(data)
