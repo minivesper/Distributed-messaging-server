@@ -26,6 +26,7 @@ class Server:
         self.db = Database()
         self.e = errHandle()
         self.active_users = []
+        self.username = "server"
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -112,51 +113,62 @@ class Server:
 
             #decode that part of data with its public key
             #send whatever server got back to client to verify the signature
-        elif data[0:4] =="VERF":
-            vf = VERF(None,None)
-            vf.decode(data)
-            verobj = vf.getverobj()
 
         elif data[0:4] == "TMOT":
             ret = "you timed out ya fool"
 
         elif data[0:4] == "CACM":
-            ca = CACM(None, None, None)
+            ca = CACM(None, None, None, None)
             ca.decode(data)
+            login = str(ca.getUsername())+ ","+ str(ca.getPass()) + ","+ str(ca.getPermis())
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
             ret = self.e.duplicate_err(error)
             if error == 0:
-                error2 = self.db.write("logindata", str(ca))
+                error2 = self.db.write("logindata", login)
                 ret = self.e.send_err(error2) #right now if 0, ret will be "message sent successfully". Not just "wrote user"
                 if error2 == 0:
-                    if ca.getPermis() == "2":
-                        print("the user has permissions #2")
-                        error3 = self.db.getAdmin("./data/logindata.txt")
-                        ret = self.e.admin_err(error3)
-                        print(error3)
-                        if error3:
-                            wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                            error4 = self.db.write("permissionMatrix", str(wperm))
-                            ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
-                            if error4 == 0:
-                                for a in error3: #error3 should be a list of all admins
-                                    data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
-                                    error5 = self.db.write(a, data)
-                                    ret = self.e.send_err(error5) #again might want to new function to print differnt string about admin (like sent message to admin instead of successfully sent)
-                                return (ret)
-                            return(ret)
-                    else:
-                        ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                        error7 = self.db.write("permissionMatrix", str(ca))
-                        ret = self.e.send_err(error7) #again change string print out?
-                        return (ret)
-                return (ret)
+                    print(ca.getpubkey())
+                    #a = ca.getpubkey().encode()
+                    #keye = a.exportkey('PEM')
+                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey()) #screws up because no longer RSA object after sending over wire
+                    ret = self.e.send_err(error8)
+                    if error8 == 0:
+                        if ca.getPermis() == "2":
+                            print("the user has permissions #2")
+                            error3 = self.db.getAdmin("./data/logindata.txt")
+                            ret = self.e.admin_err(error3)
+                            if error3:
+                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                                error4 = self.db.write("permissionMatrix", str(wperm))
+                                ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
+                                if error4 == 0:
+                                    for a in error3: #error3 should be a list of all admins
+                                        data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
+                                        error5 = self.db.write(a, data)
+                                        ret = self.e.send_err(error5) #again might want to new function to print differnt string about admin (like sent message to admin instead of successfully sent)
+                                        if error5 ==0:
+                                            s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
+                                            ret = self.e.read_err(error9)
+                                            if error9 ==0:
+                                                pubreq = PUBK(user, s_pubkey) #figure out which error handler
+                                                ret = pubreq.encode()
+                                                return(ret)
+                                return(ret)
+                        else:
+                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                            error7 = self.db.write("permissionMatrix", str(ca))
+                            ret = self.e.send_err(error7) #again change string print out?
+                            if error7==0:
+                                s_pubkey, error11 = self.db.readk() #the server reads its own public key and sends it to the user.
+                                ret = self.e.read_err(error11)
+                                if error11 ==0:
+                                    pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
+                                    ret = pubreq.encode()
+                                    return(ret)
             return(ret)
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
-            print("data", data)
-            print(data[6])
             if data[6] == None:
                 ret = "No messages"
             cm.decode(data)
@@ -219,26 +231,34 @@ class Server:
                 ret = uobj.getouser() + "is not a valid account?"
         return(ret)
 
+    # def sendKey(self):
+    #     s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
+    #     ret = self.e.read_err(error9)
+    #     if error9 ==0:
+    #         pubreq = PUBK(s_pubkey) #figure out which error handler
+    #         ret = pubreq.encode()
+    #     return ret
+
     def saveKey(self, paths):
         #after recieving a public key save it in "data/serverkeys/username.txt"
         return
 
-    def loadKey(self, paths):
-        if(os.path.exist(paths) and os.stat(paths).st_size != 0):
-            f = open(paths)
-            keypair = RSA.importKey(f.read())
-            return keypair
-        else:
-            ncry = GenKeys(1024)
-            print("generated new keypair")
-            keypair = ncry.my_keypair.exportKey('PEM')
-            self.db.writek('serverkeys/server', keypairw)
-            pubkey = ccry.my_pubkey.exportKey('PEM')
-            self.db.writek('clientkeys/server', pubkeyw)
-            return keypair
+    # def loadKey(self, paths):
+    #     if(os.path.exist(paths) and os.stat(paths).st_size != 0):
+    #         f = open(paths)
+    #         keypair = RSA.importKey(f.read())
+    #         return keypair
+    #     else:
+    #         ncry = GenKeys(1024)
+    #         print("generated new keypair")
+    #         keypair = ncry.my_keypair.exportKey('PEM')
+    #         self.db.writek('serverkeys/server', keypairw)
+    #         pubkey = ccry.my_pubkey.exportKey('PEM')
+    #         self.db.writek('clientkeys/server', pubkeyw)
+    #         return keypair
 
     def run(self):
-        path = "data/serverkeys/server.txt"
+        #path = "data/serverkeys/server.txt"
         print("listening...")
         connected_clients = []
         sessions = []
@@ -270,8 +290,9 @@ class Server:
                             #keypair = loadKey(path)
                             #cry = Crypt(keypair)
                             #data = cry.decryptit(data)
-                            cry = FernetCrypt()
+                            #cry = FernetCrypt()
                             ret_data = self.handleReq(data, s)
+                            print("ret_data",ret_data)
                             self.sendAll(ret_data,s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")

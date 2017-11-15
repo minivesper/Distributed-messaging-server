@@ -5,6 +5,7 @@ import getpass
 import select
 # import inquirer
 from DatabaseC import *
+from errHandle import *
 from Crypt import *
 from Requests import *
 from pprint import pprint
@@ -20,8 +21,12 @@ class Client:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
         self.ih = inputHandle()
-        self.keygen = GenKeys()
+        self.fc = FernetCrypt()
         self.dbc = DatabaseC()
+        self.e = errHandle()
+        self.c_keys = GenKeys()
+        self.asym = asymetricSuite(self.c_keys.my_pubkey)
+        #self.asym = asymetricSuite(keypair)
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,17 +55,23 @@ class Client:
         return self.socket
 
     def handleReturn(self, returnreq):
-        print("r",returnreq)
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
             self.cachedMessages = rm.messages
             print(rm)
+        elif(returnreq[0:4] == "PUBK"):
+            print("here")
+            print("req", returnreq)
+            pk = PUBK(None,None)
+            pk.decode(returnreq)
+            self.dbc.writesk(pk.getpubkey())
+            return
         else:
             print(returnreq)
 
     def sendAll(self,reqstr,buffsize):
-        cry = FernetasymmetricSuite()
+        cry = FernetCrypt()
         req = cry.encryptit(reqstr)
         self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
         self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
@@ -112,7 +123,8 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            print(req)
+            print(req) #encrypt the request object, and then also sign it with client's private key (call crypt class)
+            sig,msg=encrypt(req)
             self.sendAll(req,self.getBUFFER_SIZE())
             data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)
@@ -125,92 +137,76 @@ class Client:
             self.handleCommand(inp, currentUsername)
 
     def createUser(self):
-        #generate keypairs for encryption
-        #and swap public keys
+        #generate keypairs for encryption and swap public keys
         user = None
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
             user = self.inputCredentials()
-            if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
-                 f = open("data/clientkeys/" + user + ".txt")
-                 keypairr = RSA.importKey(f.read())
-                 #keypairr = self.db.readk('serverkeys/server')
-                 ccry = asymmetricSuite(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
-            ncry = GenKeys(1024)
-            print(ncry.random_gen)
-            print("generated new keypair")
-            keypairw = ncry.my_keypair.exportKey('PEM')
-            print(keypairw)
-            self.db.writek('clientkeys/' + user, keypairw)
-            pubkey = ncry.my_pubkey.exportKey('PEM')
-            #self.getSocket().sendto(pubkey,(self.getTCP_IP(), self.getTCP_PORT()))
-            #data = self.getSocket().recv(self.getBUFFER_SIZE())
-            #server_pubkey = data
-            self.db.writek('serverkeys/' + user, pubkey)
             return user
         else:
             print("LOGN or CACM dummy! not %s"%(inp))
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        cry = FernetCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb, pwdb)
+        pwd = self.fc.hashpwd(userb, pwdb)
 
-        lreq = CACM(user,str(pwd),permission) #create the CACM request
-        lreq= lreq.encode()
-        keypair = crypt.GenKeys()
-        dbc.writeKey(user, keypair)
-        pubkey_c = dbc.readKey(user,keypair)
-        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server
-        preq = preq.encode()
+        u_keypair = GenKeys()
+        u_keypairs = u_keypair.getpubkey().exportKey('PEM')
+        error = self.dbc.writek(user, u_keypairs)
+        ret = self.e.send_err(error) #need to come back to this ??
+        #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
 
-        self.sendAll(lreq,self.getBUFFER_SIZE())
-        data = self.recieveAll(self.getBUFFER_SIZE())
-        if(data == "username already exists, please enter a new username"):
-            print(data)
-            user = self.createUser()
-            return None
-        if permission == "2":
-            print("Your credentials have been sent to admin, checkback later for approval")
-            user = self.createUser()
-            return user
-        else:
-            print("account created, please login")
-            user = self.createUser()
-            return user
+        if error == 0:
+            lreq = CACM(user,str(pwd),permission, u_keypairs)
+            lreq= lreq.encode()
+            #encode this messags with FernetCrypt--which I think will still be in the sendAll and recAll
+            self.sendAll(lreq,self.getBUFFER_SIZE())
+            data = self.recieveAll(self.getBUFFER_SIZE())
+            self.handleReturn(data)
+            if(data == "username already exists, please enter a new username"):
+                print(data)
+                user = self.createUser()
+                return None
+            if permission == "2":
+                print("Your credentials have been sent to admin, checkback later for approval")
+                user = self.createUser()
+                return user
+            else:
+                print("account created, please login")
+                user = self.createUser()
+                return user
 
     def inputCredentials(self):
-        f = open("data/clientkeys/server.txt")
-        thier_pubkey = RSA.importKey(f.read())
-        user = input("Username: ")
-        f = open("data/clientkeys/" + user + ".txt")
-        keypairr = RSA.importKey(f.read())
-        #keypairr = self.db.readk('serverkeys/server')
-        cry = asymmetricSuite(keypairr)
-        pwd = getpass.getpass("Password for " + user + ": ")
-        userb = user.encode('utf-8')
-        pwdb = pwd.encode('utf-8')
-        #pwd = cry.hashpwd(userb,pwdb)
-        lreq = LOGN(user,str(pwdb))
-        lreq = lreq.encode()
-        self.sendAll(lreq,self.getBUFFER_SIZE())
-        data = self.recieveAll(self.getBUFFER_SIZE())
-        if(data == "Not a valid login?"):
-            print(data)
+        user, pwd, userb, pwdb = self.ih.credHandle()
+        keypair = self.dbc.readk(user)
+        if keypair == 2:
+            print("username does not exist")
             return None
-        elif (data == "Already logged in byeeee"):
-            print(data)
-            self.getSocket().close()
-            sys.exit(1)
         else:
-            print(data)
-            return user
+            asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
+            pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
+            lreq = LOGN(user,str(pwd))
+            lreq = lreq.encode() #changes string to bytes
+            sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
+
+            self.sendAll(sig, enc_lreq,self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
+            data = self.recieveAll(self.getBUFFER_SIZE())
+            if(data == "Not a valid login?"):
+                print(data)
+                return None
+            elif (data == "Already logged in byeeee"):
+                print(data)
+                self.getSocket().close()
+                sys.exit(1)
+            else:
+                print(data)
+                return user
 
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
