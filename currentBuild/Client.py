@@ -71,7 +71,7 @@ class Client:
             print(returnreq)
 
     def sendAll(self,sig,reqstr,buffsize):
-        req = reqstr.encode('utf-8')
+        req = reqstr
         if not sig:
             self.getSocket().sendto((1).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
             self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
@@ -101,7 +101,7 @@ class Client:
                     data.extend(singlerec)
                 else:
                     return "timeout"
-            return None,data.decode()
+            return None,bytes(data)
         elif packettype == 0:
             ret = []
             for i in range(2):
@@ -119,8 +119,9 @@ class Client:
                         data.extend(singlerec)
                     else:
                         return "timeout"
-                ret.append(data)
-            return (ret[1].decode(),''),ret[0].decode()
+                ret.append(bytes(data))
+                print(ret)
+            return (int.from_bytes(ret[1],'little'),''),(ret[0],'')
 
     def handleCommand(self, inp_str, username):
         req = ""
@@ -192,16 +193,17 @@ class Client:
         pwd = self.fc.hashpwd(userb, pwdb)
 
         u_keypair = GenKeys()
-        u_keypairs = u_keypair.getpubkey().exportKey('PEM')
+        u_keypairs = u_keypair.getkeypair().exportKey('PEM')
         error = self.dbc.writek(user, u_keypairs)
         ret = self.e.send_err(error) #need to come back to this ??
         #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
 
         if error == 0:
-            lreq = CACM(user,str(pwd),permission, u_keypairs)
+            lreq = CACM(user,str(pwd),permission, u_keypair.getpubkey().exportKey('PEM'))
             lreq= lreq.encode()
             #encode this messags with FernetCrypt--which I think will still be in the sendAll and recAll
-            self.sendAll(None, lreq,self.getBUFFER_SIZE())
+            lreq = self.fc.encryptit(lreq)
+            self.sendAll(None,lreq,self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)
             if(data == "username already exists, please enter a new username"):
@@ -220,17 +222,17 @@ class Client:
     def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
         keypair = self.dbc.readk(user)
-        if keypair == 2:
+        if not keypair:
             print("username does not exist")
             return None
         else:
             asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
             pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
-            lreq = LOGN(user,str(pwd))
+            lreq = LOGN(user,pwd.decode())
             lreq = lreq.encode() #changes string to bytes
             sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
 
-            self.sendAll(sig, enc_lreq,self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
+            self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             if(data == "Not a valid login?"):
                 print(data)

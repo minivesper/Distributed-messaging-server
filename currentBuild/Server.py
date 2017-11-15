@@ -58,7 +58,7 @@ class Server:
         return self.socket
 
     def sendAll(self,sig,reqstr,connection,buffsize):
-        req = reqstr.encode('utf-8')
+        req = reqstr
         if not sig:
             connection.send((1).to_bytes(4,'little'))
             connection.send((len(req)).to_bytes(4,'little'))
@@ -87,7 +87,7 @@ class Server:
                     data.extend(singlerec)
                 else:
                     return "timeout"
-            return None,data.decode()
+            return None,bytes(data)
 
         elif packettype == 0:
             ret = []
@@ -106,9 +106,8 @@ class Server:
                         data.extend(singlerec)
                     else:
                         return "timeout"
-                ret.append(data)
-            print(ret)
-            return (ret[1].decode(),''),ret[0].decode()
+                ret.append(bytes(data))
+            return (int.from_bytes(ret[1],'little'),''),(ret[0],'')
 
     def handleReq(self, data, session):
         ret = "nothing to see here"
@@ -276,16 +275,14 @@ class Server:
             keypair = RSA.importKey(f.read())
             return keypair
         else:
-            ncry = GenKeys(1024)
+            ncry = GenKeys()
             print("generated new keypair")
             keypair = ncry.my_keypair.exportKey('PEM')
-            self.db.writek('serverkeys/server', keypairw)
-            pubkey = ccry.my_pubkey.exportKey('PEM')
-            self.db.writek('clientkeys/server', pubkeyw)
+            self.db.writek('server', keypair.decode())
             return keypair
 
     def run(self):
-        #path = "data/serverkeys/server.txt"
+        self.loadKey("./data/serverkeys/server.txt")
         print("listening...")
         connected_clients = []
         sessions = []
@@ -315,7 +312,8 @@ class Server:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             data = s.sDecrypt(sig,data)
-                            ret_data = self.handleReq(data, s)
+                            print(data)
+                            ret_data = self.handleReq(data.decode(), s)
                             sig,ret_data = s.sEncrypt(ret_data)
                             self.sendAll(sig,ret_data,s.conn,self.getBUFFER_SIZE())
                         else:

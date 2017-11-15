@@ -57,7 +57,7 @@ class DatabaseC:
             if file == "./data/clientkeys/" + username + ".txt":
                 fname = file
                 try:
-                    f = open(fmame)
+                    f = open(fname)
                     keypair = RSA.importKey(f.read())
                     return keypair
                 except (IOError, OSError) as e:
@@ -66,7 +66,7 @@ class DatabaseC:
                 finally:
                    f.close()
             else:
-                return(2)
+                return(None)
 
 
        #if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):

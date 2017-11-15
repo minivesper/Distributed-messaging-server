@@ -21,6 +21,7 @@ class Session:
         self.DMSGp = False
 
         keypair = self.loadSKey("./data/serverkeys/server.txt")
+        print(keypair)
         self.ac = asymetricSuite(keypair)
 
     def getLoggedin(self):
@@ -79,12 +80,12 @@ class Session:
             sig,msg = self.ac.encryptit(data,pubk)
             return sig,msg
         else:
-            data = fc.encryptit(data)
+            data = self.fc.encryptit(data)
             return None,data
 
     def sDecrypt(self,sig,data):
         if not sig:
-            data = fc.decryptit(data)
+            data = self.fc.decryptit(data)
             return data
         else:
             path = "./data/serverkeys/" + self.username + ".txt"

@@ -46,7 +46,7 @@ class asymetricSuite:
 
     def getSignature(self, msg):
         hash_of_my_msg = MD5.new(msg).digest()
-        my_signature = self.keypair.sign(hash_of_my_msg, '')
+        my_signature = self.my_keypair.sign(hash_of_my_msg, '')
         return my_signature
 
     def getpubkey(self):
@@ -73,8 +73,8 @@ class asymetricSuite:
             return ret
 
     def encryptit(self, msg, thier_pubkey):
-        sig = getSignature(msg)
-        enc = encPub(msg, thier_pubkey)
+        sig = self.getSignature(msg.encode('utf-8'))
+        enc = self.encPub(msg.encode('utf-8'), thier_pubkey)
         return sig,enc
 
     def decryptit(self, enc, sender_sig, sender_pubkey):
