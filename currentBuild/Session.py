@@ -24,6 +24,7 @@ class Session:
         return self.username
 
     def loginAttempt(self, LOGNreq):
+        print(LOGNreq.getUsername(), LOGNreq.getPass())
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
         if ver:
             self.username = LOGNreq.getUsername()
