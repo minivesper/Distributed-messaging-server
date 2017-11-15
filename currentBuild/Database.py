@@ -30,7 +30,7 @@ class Database:
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username and lparts[1] == passwd):
+                    if(lparts[0] == username and lparts[1][:-1] == passwd):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
                 print("could not read from file %s"%(e))
@@ -109,6 +109,27 @@ class Database:
                             lparts[int(tag)] = perm
                     f.write(",".join(lparts))
                 dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
+    def writek(self,recipient, writeText):
+        try:
+            fname = "./data/" + recipient + ".txt"
+            f = open(fname, 'a+b')
+            if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
+                try:
+                    print("writeText", writeText)
+                    f.write(writeText)
+                except EXPECTED_EXCEPTION_TYPES as e:
+                    print("could not write to file %s"%(e))
+                    return(1)
+                finally:
+                    f.close()
+            else:
+                print("inbox is full error")
+                return(3)
         except (IOError, OSError) as e:
             print("could not open file %s"%(e))
             return(2)
@@ -201,3 +222,21 @@ class Database:
            print("could not open file %s"%(e))
            return None, 2
         return messages, 0
+
+    def readk(self,username):
+        fname = "./data/" + username + ".txt"
+        try:
+           f = open(fname, 'r')
+           f.close()
+           try:
+               with open(fname) as infile:
+                   f = infile.readline()
+                   return f
+           except IOError as e:
+               print("could not read from file %s"%(e))
+               return None
+           finally:
+               f.close()
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+           return None

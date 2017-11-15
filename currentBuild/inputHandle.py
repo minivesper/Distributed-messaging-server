@@ -39,12 +39,12 @@ class inputHandle:
     def getCredentials(self):
         print("please enter a username with only letters and numbers")
         user = input("Username: ")
-        while (re.search("[a-z|0-9]", user)) is None:
-            print("please enter a username with only letters and numbers")
-            user = input("Username: ")
-            while (len(user))>15:
-                print("please enter a username with 15 characters")
-                user = input("Username: ")
+        # while (re.search("[a-z|0-9]", user)) is None:
+        #     print("please enter a username with only letters and numbers")
+        #     user = input("Username: ")
+        #     while (len(user))>15:
+        #         print("please enter a username with 15 characters")
+        #         user = input("Username: ")
         print("Please create a password")
         pwd = getpass.getpass("Password for " + user + ":")
         # while(len(pwd))<8:

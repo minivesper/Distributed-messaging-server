@@ -2,11 +2,14 @@ import socket
 import sys
 import re
 import getpass
+import select
 # import inquirer
+from DatabaseC import *
 from Crypt import *
 from Requests import *
 from pprint import pprint
 from inputHandle import *
+import time
 
 ADDRESS_OF_SERVER = '127.0.0.1'
 
@@ -17,6 +20,8 @@ class Client:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.cachedMessages = None
         self.ih = inputHandle()
+        self.keygen = GenKeys()
+        self.dbc = DatabaseC()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,7 +50,6 @@ class Client:
         return self.socket
 
     def handleReturn(self, returnreq):
-        print("r",returnreq)
         if(returnreq[0:4] == "RMSG"):
             rm = RMSG(None,None)
             rm.decode(returnreq)
@@ -54,22 +58,57 @@ class Client:
         else:
             print(returnreq)
 
+    def sendAll(self,sig,reqstr,buffsize):
+        req = reqstr.encode('utf-8')
+        if not sig:
+            self.getSocket().sendto((1).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
+            self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+        else:
+            self.getSocket().sendto((0).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
+            self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto((len(sig)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(sig,(self.getTCP_IP(), self.getTCP_PORT()))
 
-    def sendAll(self,reqstr,buffsize):
-        cry = Crypt()
-        req = cry.encryptit(reqstr)
-        self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
-        self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
 
     def recieveAll(self,buffsize):
         retdata = ""
-        cry = Crypt()
         data = bytearray()
-        packetsize = self.getSocket().recv(4)
-        while sys.getsizeof(data) < int.from_bytes(packetsize,'little'):
-            data.extend(self.getSocket().recv(self.getBUFFER_SIZE()))
-        retdata = cry.decryptit(bytes(data)).decode()
-        return retdata
+        packettype = int.from_bytes(self.getSocket().recv(4), 'little')
+        if packettype == 1:
+            packetsize = int.from_bytes(self.getSocket().recv(4),'little')
+            while packetsize > 0:
+                read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+                if self.getSocket() in read_sockets:
+                    if(packetsize > 1024):
+                        singlerec = self.getSocket().recv(self.getBUFFER_SIZE())
+                    else:
+                        singlerec = self.getSocket().recv(packetsize)
+                        packetsize -= sys.getsizeof(singlerec)
+                    data.extend(singlerec)
+                else:
+                    return "timeout"
+            return None,data.decode()
+        elif packettype == 0:
+            ret = []
+            for i in range(2):
+                retdata = ""
+                data = bytearray()
+                packetsize = int.from_bytes(self.getSocket().recv(4),'little')
+                while packetsize > 0:
+                    read_sockets, write_sockets, error_sockets = select.select([self.getSocket()], [], [], 4)
+                    if self.getSocket() in read_sockets:
+                        if(packetsize > 1024):
+                            singlerec = self.getSocket().recv(self.getBUFFER_SIZE())
+                        else:
+                            singlerec = self.getSocket().recv(packetsize)
+                            packetsize -= sys.getsizeof(singlerec)
+                        data.extend(singlerec)
+                    else:
+                        return "timeout"
+                ret.append(data)
+            return (ret[1].decode(),''),ret[0].decode()
 
     def handleCommand(self, inp_str, username):
         req = ""
@@ -104,8 +143,8 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            self.sendAll(req,self.getBUFFER_SIZE())
-            data = self.recieveAll(self.getBUFFER_SIZE())
+            self.sendAll(None,req,self.getBUFFER_SIZE())
+            sig,data = self.recieveAll(self.getBUFFER_SIZE())
             self.handleReturn(data)
         else:
             print("%s is not a valid request type"%(inp_str))
@@ -116,51 +155,83 @@ class Client:
             self.handleCommand(inp, currentUsername)
 
     def createUser(self):
+        #generate keypairs for encryption
+        #and swap public keys
         user = None
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
             user = self.inputCredentials()
+            # if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
+            #      f = open("data/clientkeys/" + user + ".txt")
+            #      keypairr = RSA.importKey(f.read())
+            #      #keypairr = self.db.readk('serverkeys/server')
+            #      ccry = asymmetricSuite(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
+            ncry = GenKeys(1024)
+            print(ncry.random_gen)
+            print("generated new keypair")
+            keypairw = ncry.my_keypair.exportKey('PEM')
+            print(keypairw)
+            self.db.writek('clientkeys/' + user, keypairw)
+            pubkey = ncry.my_pubkey.exportKey('PEM')
+            #self.getSocket().sendto(pubkey,(self.getTCP_IP(), self.getTCP_PORT()))
+            #data = self.getSocket().recv(self.getBUFFER_SIZE())
+            #server_pubkey = data
+            self.db.writek('serverkeys/' + user, pubkey)
             return user
         else:
             print("LOGN or CACM dummy! not %s"%(inp))
             return user
 
     def checkCredentials(self, user, pwd, permission):
-        cry = Crypt()
+        cry = FernetCrypt()
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = cry.hashpwd(userb, pwdb)
-        lreq = CACM(user,str(pwd),permission)
+
+        lreq = CACM(user,str(pwd),permission) #create the CACM request
         lreq= lreq.encode()
-        self.sendAll(lreq,self.getBUFFER_SIZE())
-        data = self.recieveAll(self.getBUFFER_SIZE())
+        keypair = crypt.GenKeys()
+        dbc.writeKey(user, keypair)
+        pubkey_c = dbc.readKey(user,keypair)
+        preq = PUBK(user, pubkey_c) #create the PUBK request to send to server
+        preq = preq.encode()
+
+        self.sendAll(None,lreq,self.getBUFFER_SIZE())
+        sig,data = self.recieveAll(self.getBUFFER_SIZE())
         if(data == "username already exists, please enter a new username"):
             print(data)
             user = self.createUser()
             return None
         if permission == "2":
             print("Your credentials have been sent to admin, checkback later for approval")
-            sys.exit(1)
+            user = self.createUser()
             return user
         else:
-            print(data)
+            print("account created, please login")
+            user = self.createUser()
             return user
 
     def inputCredentials(self):
-        cry = Crypt()
+        # f = open("data/clientkeys/server.txt")
+        # thier_pubkey = RSA.importKey(f.read())
         user = input("Username: ")
+        # f = open("data/clientkeys/" + user + ".txt")
+        # keypairr = RSA.importKey(f.read())
+        # #keypairr = self.db.readk('serverkeys/server')
+        # cry = asymmetricSuite(keypairr)
         pwd = getpass.getpass("Password for " + user + ": ")
-        userb = user.encode('utf-8')
-        pwdb = pwd.encode('utf-8')
-        pwd = cry.hashpwd(userb,pwdb)
-        lreq = LOGN(user,str(pwd))
+        # userb = user.encode('utf-8')
+        # pwdb = pwd.encode('utf-8')
+        # pwd = cry.hashpwd(userb,pwdb)
+        tup = ("cheese","chel")
+        lreq = LOGN(user,pwd)
         lreq = lreq.encode()
-        self.sendAll(lreq,self.getBUFFER_SIZE())
-        data = self.recieveAll(self.getBUFFER_SIZE())
+        self.sendAll(tup[0].encode('utf-8'),lreq,self.getBUFFER_SIZE())
+        sig,data = self.recieveAll(self.getBUFFER_SIZE())
         if(data == "Not a valid login?"):
             print(data)
             return None
