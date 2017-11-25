@@ -51,9 +51,10 @@ class Request:
         return ret
 
 class LOGN(Request):
-    def __init__(self,username,passwd):
+    def __init__(self,username,passwd, pubkey):
         Request.__init__(self,username,"LOGN")
         self.passwd = passwd
+        self.pubkey = pubkey
 
     def getPass(self):
         return self.passwd
@@ -61,9 +62,12 @@ class LOGN(Request):
     def getTime(self):
         return str(self.time)
 
+    def getpubkey(self):
+        return self.pubkey
+
     def encode(self):
         sendStr = "LOGN|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getTime()) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getpubkey().decode()) + "|"+ self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -87,6 +91,10 @@ class LOGN(Request):
                     self.time = stream_item
                     stream_item = ""
                     writes = writes+1
+                elif writes == 3:
+                    self.pubkey = stream_item
+                    stream_item = ""
+                    writes = writes+1
                 if stream[c] == "?":
                     return
             else:
@@ -94,7 +102,7 @@ class LOGN(Request):
             c=c+1
 
     def __repr__(self):
-        return("%s,%s,%s"%(self.getUsername(), self.getPass(), self.getTime()))
+        return("%s,%s,%s, %s"%(self.getUsername(), self.getPass(), self.getpubkey(),self.getTime()))
 
 
 class PUBK(Request):
@@ -102,6 +110,9 @@ class PUBK(Request):
         Request.__init__(self,username,"PUBK")
         self.pubkey = pubkey
         self.username = username
+
+    def getUsername(self):
+        return self.username
 
     def getpubkey(self):
         return self.pubkey
@@ -129,7 +140,6 @@ class PUBK(Request):
                     writes=writes+1
                 elif writes == 1:
                     self.pubkey = stream_item
-                    print(self.pubkey)
                     stream_item = ""
                     writes=writes+1
                 elif writes == 2:
@@ -285,36 +295,6 @@ class CACM(Request):
 
         def __repr__(self):
             return("%s,%s,%s,%s,%s"%(self.getUsername(),self.getPass(),self.getPermis(), self.getpubk(), self.getTime()))
-        #
-        # parselist = []
-        # for i in range(len(parseStr)):
-        #     if parselist:
-        #         if parseStr[i] == "?":
-        #             if parseStr[i-1] != "\\":
-        #                 parselist.append(parseStr[b+1:])
-        #         else:
-        #             if parseStr[i] == "|":
-        #                 if parseStr[i-1] != "\\":
-        #                     parselist.append(parseStr[b+1:i])
-        #                     b = i
-        #                 elif parseStr[i-1] == "\\":
-        #                     if parseStr[i-1] == "\\" and parseStr[i-2] == "\\":
-        #                         parselist.append(parseStr[b+1:i])
-        #                         b = i
-        #     else:
-        #         if parseStr[i] == "|":
-        #             if parseStr[i-1] != "\\":
-        #                 parselist.append(parseStr[0:i])
-        #                 b=i
-        # i = 0
-        # print(parselist)
-        # while i< len(parselist):
-        #     parselist[i] = self.removechar(parselist[i])
-        #     i +=1
-        # self.username = parselist[1]
-        # self.password = parselist[2]
-        # self.permission = parselist[3]
-
 
 class SMSG(Request):
     def __init__(self, Username, Recipient, Message):

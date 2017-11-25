@@ -25,7 +25,7 @@ class Client:
         self.dbc = DatabaseC()
         self.e = errHandle()
         self.c_keys = GenKeys()
-        self.asym = asymetricSuite(self.c_keys.my_pubkey)
+        self.username =""
         #self.asym = asymetricSuite(keypair)
 
         try:
@@ -53,22 +53,6 @@ class Client:
 
     def getSocket(self):
         return self.socket
-
-    def handleReturn(self, returnreq):
-        if(returnreq[0:4] == "RMSG"):
-            rm = RMSG(None,None)
-            rm.decode(returnreq)
-            self.cachedMessages = rm.messages
-            print(rm)
-        elif(returnreq[0:4] == "PUBK"):
-            print("here")
-            print("req", returnreq)
-            pk = PUBK(None,None)
-            pk.decode(returnreq)
-            self.dbc.writesk(pk.getpubkey())
-            return
-        else:
-            print(returnreq)
 
     def sendAll(self,sig,reqstr,buffsize):
         req = reqstr
@@ -102,6 +86,7 @@ class Client:
                 else:
                     return "timeout"
             return None,bytes(data)
+
         elif packettype == 0:
             ret = []
             for i in range(2):
@@ -120,11 +105,23 @@ class Client:
                     else:
                         return "timeout"
                 ret.append(bytes(data))
-                print(ret)
             return (int.from_bytes(ret[1],'little'),''),(ret[0],'')
 
+    def handleReturn(self, returnreq):
+        if returnreq[0:4] == "PUBK" :
+            pk = PUBK(None,None)
+            pk.decode(returnreq)
+            self.dbc.writesk(pk.getpubkey())
+            return
+        elif returnreq[0:4] == "RMSG":
+            rm = RMSG(None,None)
+            rm.decode(returnreq)
+            self.cachedMessages = rm.messages
+        else:
+            print(returnreq)
+
     def handleCommand(self, inp_str, username):
-        req = ""
+        req = "Not a valid Server-- attacker present"
         if(inp_str == "SMSG"):
             sendTo,msgtxt = self.ih.sendHandle()
             req = SMSG(username, sendTo, msgtxt)
@@ -156,9 +153,18 @@ class Client:
             sys.exit(1)
 
         if(req != ""):
-            self.sendAll(None,req,self.getBUFFER_SIZE())
-            sig,data = self.recieveAll(self.getBUFFER_SIZE())
-            self.handleReturn(data)
+            #change to server's public key duh idiot
+            keypair = self.dbc.readsk()
+            asym = asymetricSuite(keypair)
+            sig,enc_req = asym.encryptit(req,keypair)
+            self.sendAll(str(sig[0]).encode(),enc_req[0],self.getBUFFER_SIZE())
+            sig, data = self.recieveAll(self.getBUFFER_SIZE())
+            sig, enc_req = asym.encryptit(req, asym.getpubkey())
+            msg,ver = asym.decryptit(data,sig,keypair)
+            if(ver):
+                self.handleReturn(msg)
+            else:
+                return req
         else:
             print("%s is not a valid request type"%(inp_str))
 
@@ -173,11 +179,6 @@ class Client:
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
             user = self.inputCredentials()
-            # if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
-            #      f = open("data/clientkeys/" + user + ".txt")
-            #      keypairr = RSA.importKey(f.read())
-            #      #keypairr = self.db.readk('serverkeys/server')
-            #      ccry = asymmetricSuite(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
@@ -199,13 +200,13 @@ class Client:
         #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
 
         if error == 0:
-            lreq = CACM(user,str(pwd),permission, u_keypair.getpubkey().exportKey('PEM'))
+            lreq = CACM(user,pwd.decode(),permission, u_keypair.getpubkey().exportKey('PEM'))
             lreq= lreq.encode()
-            #encode this messags with FernetCrypt--which I think will still be in the sendAll and recAll
             lreq = self.fc.encryptit(lreq)
             self.sendAll(None,lreq,self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            self.handleReturn(data)
+            msg = self.fc.decryptit(data)
+            self.handleReturn(msg.decode())
             if(data == "username already exists, please enter a new username"):
                 print(data)
                 user = self.createUser()
@@ -221,18 +222,19 @@ class Client:
 
     def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
+        self.username = user
         keypair = self.dbc.readk(user)
         if not keypair:
             print("username does not exist")
             return None
         else:
             asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
+            u_pubkey = keypair.publickey().exportKey('PEM')
             pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
-            lreq = LOGN(user,pwd.decode())
+            lreq = LOGN(user,pwd.decode(), u_pubkey)
             lreq = lreq.encode() #changes string to bytes
             sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
-
-            self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
+            self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             if(data == "Not a valid login?"):
                 print(data)

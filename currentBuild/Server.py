@@ -112,10 +112,11 @@ class Server:
     def handleReq(self, data, session):
         ret = "nothing to see here"
         if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None)
+            lg = LOGN(None, None,None)
             lg.decode(data)
             if(session.datecheck(lg.getTime())):
                 if(session.loginAttempt(lg)):
+                    print(session.loginAttempt(lg))
                     if lg.getUsername() not in self.active_users:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
@@ -153,12 +154,10 @@ class Server:
                 error2 = self.db.write("logindata", login)
                 ret = self.e.send_err(error2) #right now if 0, ret will be "message sent successfully". Not just "wrote user"
                 if error2 == 0:
-                    print(ca.getpubkey())
-                    #a = ca.getpubkey().encode()
-                    #keye = a.exportkey('PEM')
-                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey()) #screws up because no longer RSA object after sending over wire
+                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
+                        #session.assignUser(ca)
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")
@@ -296,7 +295,6 @@ class Server:
                 s = Session(conn)
                 sessions.append(s)
                 connected_clients.append(s.conn)
-                #swap public keys
                 print('Connection address:', addr)
 
             clients_allowed = []
@@ -312,10 +310,13 @@ class Server:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             data = s.sDecrypt(sig,data)
-                            print(data)
                             ret_data = self.handleReq(data.decode(), s)
                             sig,ret_data = s.sEncrypt(ret_data)
-                            self.sendAll(sig,ret_data,s.conn,self.getBUFFER_SIZE())
+
+                            if sig == None: #used to send over server's key.
+                                self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())
+                            else:
+                                self.sendAll(str(sig[0]).encode(),ret_data[0],s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             if s.getUsername() in self.active_users:

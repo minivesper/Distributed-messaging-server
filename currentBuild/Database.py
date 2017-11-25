@@ -31,7 +31,7 @@ class Database:
             try:
                 for line in f:
                     lparts = line.split(",")
-                    if(lparts[0] == username and lparts[1][:-1] == passwd):
+                    if(lparts[0] == username and lparts[1] == passwd):
                         found = True
             except EXPECTED_EXCEPTION_TYPES as e:
                 print("could not read from file %s"%(e))
@@ -86,6 +86,27 @@ class Database:
            return 2
         return 0
 
+    def returnUser(self, username):
+        try:
+           f = open("./data/logindata.txt", 'r')
+           f.close()
+           try:
+               with open("./data/logindata.txt") as infile:
+                   for line in infile:
+                       lparts = line.split(",")
+                       if(lparts[0] == username):
+                           return (0, username)
+           except IOError as e:
+               print("could not read from file %s"%(e))
+               return (1, None)
+           finally:
+               f.close()
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+           return (2, None)
+        return (3, None)
+
+
     def checkexistance(self, fname, ouser):
         with open(fname) as infile:
             for line in infile:
@@ -122,10 +143,6 @@ class Database:
             if os.path.getsize(fname) + sys.getsizeof(writeText) < 100000:
                 try:
                     f.write(writeText)
-
-                # except EXPECTED_EXCEPTION_TYPES as e:
-                #     print("could not write to file %s"%(e))
-                #     return(1)
                 finally:
                     f.close()
             else:

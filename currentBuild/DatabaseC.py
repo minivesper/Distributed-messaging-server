@@ -15,7 +15,7 @@ class DatabaseC:
     def writesk(self,keypair):
         try:
             fname = "./data/clientkeys/server.txt"
-            f = open(fname, 'w')
+            f = open(fname, 'w+')
             if os.path.getsize(fname) + sys.getsizeof(keypair) < 100000:
                 try:
                     f.write(keypair)
@@ -54,7 +54,7 @@ class DatabaseC:
         path = "./data/clientkeys/*.txt"
         files=glob.glob(path)
         for file in files:
-            if file == "./data/clientkeys/" + username + ".txt":
+            if file == './data/clientkeys/' + username + '.txt':
                 fname = file
                 try:
                     f = open(fname)
@@ -65,8 +65,20 @@ class DatabaseC:
                     return None
                 finally:
                    f.close()
-            else:
-                return(None)
+        return None
+
+    def readsk(self): #reads through all the possible client key files to ensure that username typed in is valid
+        fname = "./data/clientkeys/server.txt"
+        try:
+            f = open(fname)
+            keypair = RSA.importKey(f.read())
+            return keypair
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return None
+        finally:
+           f.close()
+        return None
 
 
        #if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
