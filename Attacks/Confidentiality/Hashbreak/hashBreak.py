@@ -1,12 +1,8 @@
 import getpass
 import base64
 from cryptography.fernet import Fernet
-from pprint import pprint
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import sys
-import os
+
 
 def crack(bytestr, search):
     key = bytearray(32)
@@ -17,7 +13,6 @@ def crack(bytestr, search):
         try:
             de = f.decrypt(bytestr)
             if str(de)[2:6] == search:
-                print(key)
                 return de
             else:
                 pass
@@ -40,7 +35,7 @@ def incbyteRFC(key, ind):
 if __name__ == "__main__":
     bytestr = sys.argv[1]
     key = bytearray(32)
-    for i in range(32*32):
+    for i in range(32*32*32):
         key = incbyteRFC(key, len(key)-1)
     f = Fernet(base64.urlsafe_b64encode(bytes(key)))
     string = "test"
