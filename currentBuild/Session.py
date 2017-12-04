@@ -122,7 +122,9 @@ class Session:
             return data
 
         elif not self.username: #specifically for the LOGN request! Since self.username is not assigned yet
-            req = self.checkpubkey(data)
+            req = self.ac.decPri(data)
+            print("reqqqqq", req.decode())
+            #req = self.checkpubkey(data)
             return req
         else: #for everyother request (SMSG, CMSG, ...)
             path = "./data/serverkeys/" + self.username + ".txt"

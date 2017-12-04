@@ -231,7 +231,8 @@ class Client:
             asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
             u_pubkey = keypair.publickey().exportKey('PEM')
             pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
-            lreq = LOGN(user,pwd.decode(), u_pubkey)
+            lreq = LOGN(user,pwd.decode())
+            print("LREQ", lreq)
             lreq = lreq.encode() #changes string to bytes
             sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
             self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())

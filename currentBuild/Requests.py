@@ -51,10 +51,9 @@ class Request:
         return ret
 
 class LOGN(Request):
-    def __init__(self,username,passwd, pubkey):
+    def __init__(self,username,passwd):
         Request.__init__(self,username,"LOGN")
         self.passwd = passwd
-        self.pubkey = pubkey
 
     def getPass(self):
         return self.passwd
@@ -62,12 +61,9 @@ class LOGN(Request):
     def getTime(self):
         return str(self.time)
 
-    def getpubkey(self):
-        return self.pubkey
-
     def encode(self):
         sendStr = "LOGN|"
-        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getpubkey().decode()) + "|"+ self.addchar(self.getTime()) + "?"
+        sendStr += self.addchar(self.getUsername()) + "|" + self.addchar(self.getPass()) + "|"+ self.addchar(self.getTime()) + "?"
         return sendStr
 
     def decode(self, stream):
@@ -91,10 +87,6 @@ class LOGN(Request):
                     self.time = stream_item
                     stream_item = ""
                     writes = writes+1
-                elif writes == 3:
-                    self.pubkey = stream_item
-                    stream_item = ""
-                    writes = writes+1
                 if stream[c] == "?":
                     return
             else:
@@ -102,7 +94,7 @@ class LOGN(Request):
             c=c+1
 
     def __repr__(self):
-        return("%s,%s,%s, %s"%(self.getUsername(), self.getPass(), self.getpubkey(),self.getTime()))
+        return("%s,%s,%s"%(self.getUsername(), self.getPass(),self.getTime()))
 
 
 class PUBK(Request):
