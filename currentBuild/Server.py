@@ -107,16 +107,15 @@ class Server:
                     else:
                         return "timeout"
                 ret.append(bytes(data))
-            return (int.from_bytes(ret[1],'little'),''),(ret[0],'')
+            return (int(ret[1].decode()),),(ret[0],)
 
     def handleReq(self, data, session):
         ret = "nothing to see here"
         if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None,None)
+            lg = LOGN(None,None)
             lg.decode(data)
             if(session.datecheck(lg.getTime())):
                 if(session.loginAttempt(lg)):
-                    print(session.loginAttempt(lg))
                     if lg.getUsername() not in self.active_users:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds

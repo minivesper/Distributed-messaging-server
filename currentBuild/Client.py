@@ -105,7 +105,7 @@ class Client:
                     else:
                         return "timeout"
                 ret.append(bytes(data))
-            return (int.from_bytes(ret[1],'little'),''),(ret[0],'')
+            return (int(ret[1].decode()),),(ret[0],)
 
     def handleReturn(self, returnreq):
         if returnreq[0:4] == "PUBK" :
@@ -116,6 +116,7 @@ class Client:
         elif returnreq[0:4] == "RMSG":
             rm = RMSG(None,None)
             rm.decode(returnreq)
+            print(rm)
             self.cachedMessages = rm.messages
         else:
             print(returnreq)
@@ -154,19 +155,19 @@ class Client:
 
         if(req != ""):
             #change to server's public key duh idiot
-            keypair = self.dbc.readsk()
+            keypair = self.dbc.readk(username)
             asym = asymetricSuite(keypair)
-            sig,enc_req = asym.encryptit(req,keypair)
+            sig,enc_req = asym.encryptit(req,self.dbc.readsk())
             self.sendAll(str(sig[0]).encode(),enc_req[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            sig, enc_req = asym.encryptit(req, asym.getpubkey())
-            msg,ver = asym.decryptit(data,sig,keypair)
+            msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
             if(ver):
-                self.handleReturn(msg)
+                self.handleReturn(msg.decode())
             else:
                 return req
         else:
             print("%s is not a valid request type"%(inp_str))
+
 
     def run(self, currentUsername):
         while True:
@@ -208,7 +209,6 @@ class Client:
             msg = self.fc.decryptit(data)
             self.handleReturn(msg.decode())
             if(data == "username already exists, please enter a new username"):
-                print(data)
                 user = self.createUser()
                 return None
             if permission == "2":
@@ -232,9 +232,8 @@ class Client:
             u_pubkey = keypair.publickey().exportKey('PEM')
             pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
             lreq = LOGN(user,pwd.decode())
-            print("LREQ", lreq)
             lreq = lreq.encode() #changes string to bytes
-            sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
+            sig, enc_lreq = asym.encryptit(lreq, self.dbc.readsk())
             self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             if(data == "Not a valid login?"):
@@ -245,7 +244,6 @@ class Client:
                 self.getSocket().close()
                 sys.exit(1)
             else:
-                print(data)
                 return user
 
     #inquirer code we are not using for the time being

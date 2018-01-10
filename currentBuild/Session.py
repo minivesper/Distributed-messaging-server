@@ -40,26 +40,22 @@ class Session:
             print("Something went terribly terribly wrong")
             return None
 
-    def checkpubkey(self, data):
-        path = "./data/serverkeys/*.txt"
-        files=glob.glob(path)
-        for file in files:
-            try:
-                f = open(file)
-                print("fFffff",f)
-                keypair = RSA.importKey(f.read())
-                pub_key = keypair.publickey()
-                #msg,ver = self.ac.decryptit(data,sig,pub_key)
-                msg = self.ac.decPri(data, pub_key)
-                if ver:
-                    return msg
-                else:
-                    return None
-            except (IOError, OSError) as e:
-                print("could not open file %s"%(e))
-                return None
-            finally:
-               f.close()
+    def checkpubkey(self, dec, sig, username):
+        path = "./data/serverkeys/" + username + ".txt"
+        try:
+            f = open(path)
+            keypair = RSA.importKey(f.read())
+            pub_key = keypair.publickey()
+            ver = self.ac.valSignature(dec, sig, pub_key)
+            if ver:
+                return True
+            else:
+                return False
+        except (IOError, OSError) as e:
+            print("could not open file %s" % (e))
+            return None
+        finally:
+           f.close()
 
     def loginAttempt(self, LOGNreq):
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
@@ -123,13 +119,15 @@ class Session:
 
         elif not self.username: #specifically for the LOGN request! Since self.username is not assigned yet
             req = self.ac.decPri(data)
-            print("reqqqqq", req.decode())
-            #req = self.checkpubkey(data)
-            return req
+            lg = req.decode().split("|")
+            if self.checkpubkey(req,sig,lg[1]):
+                return req
+            else:
+                return None
+
         else: #for everyother request (SMSG, CMSG, ...)
             path = "./data/serverkeys/" + self.username + ".txt"
             pubk = self.loadSKey(path)
-            print("pubk",pubk)
             msg,ver = self.ac.decryptit(data,sig,pubk)
             if(ver):
                 return msg
