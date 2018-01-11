@@ -173,6 +173,15 @@ class Database:
             return(2)
         return(0)
 
+    def writeuser(self,username):
+        try:
+            fname = "./data/" + username + ".txt"
+            f = open(fname, 'a')
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
     def writeMalicious(self, writeText):
         try:
             fname= "./datamalicious/userinfo" + str(self.counter) + ".dat"
