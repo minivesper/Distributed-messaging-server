@@ -192,8 +192,6 @@ class Server:
                                         ret = pubreq.encode()
                                         return(ret)
             return(ret)
-            #test
-            #test
 
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
