@@ -94,7 +94,7 @@ class LOGN(Request):
             c=c+1
 
     def __repr__(self):
-        return("%s,%s,%s, %s"%(self.getUsername(), self.getPass(), self.getpubkey(),self.getTime()))
+        return("%s,%s,%s"%(self.getUsername(), self.getPass(),self.getTime()))
 
 
 class PUBK(Request):
