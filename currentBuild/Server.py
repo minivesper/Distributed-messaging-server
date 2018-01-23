@@ -123,11 +123,14 @@ class Server:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
                         ret = ("logged in successfully")
+                        return(ret)
                     else:
                         ret = ("Already logged in byeeee")
+                        return(ret)
                 else:
+                    print("hjkljkljkl")
                     ret = ("Not a valid login?")
-                return(ret)
+                    return(ret)
             else:
                 print("Timed out") #print statement to show middle man cannot access user's account
                 ret = "Timed Out"
@@ -247,10 +250,10 @@ class Server:
                         print("message sent")
                     else:
                         ret = "Session Validation error?"
-                        return ret
+                        return (ret)
                 else:
                     ret = "Timed out"
-                    return ret
+                    return (ret)
             else:
                 ret = sobj.getRecipient() + " is not a valid account?"
 
@@ -324,6 +327,7 @@ class Server:
                         if data:
                             data = s.sDecrypt(sig,data)
                             ret_data = self.handleReq(data.decode(), s)
+                            print(ret_data)
                             sig,ret_data = s.sEncrypt(ret_data)
 
                             if sig == None: #used to send over server's key.

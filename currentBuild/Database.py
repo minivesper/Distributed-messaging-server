@@ -126,7 +126,7 @@ class Database:
                 for line in infile:
                     lparts = line.split(",")
                     for i in range(len(lparts)):
-                        found = usercha.search(lparts[i])
+                        found = usercha.match(lparts[i])
                         if found:
                             lparts[int(tag)] = perm
                     f.write(",".join(lparts))

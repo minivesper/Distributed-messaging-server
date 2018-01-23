@@ -158,8 +158,10 @@ class Client:
             keypair = self.dbc.readk(username)
             asym = asymetricSuite(keypair)
             sig,enc_req = asym.encryptit(req,self.dbc.readsk())
+            print(sig)
             self.sendAll(str(sig[0]).encode(),enc_req[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
+            print("sig",sig)
             msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
             if(ver):
                 self.handleReturn(msg.decode())
@@ -236,7 +238,10 @@ class Client:
             sig, enc_lreq = asym.encryptit(lreq, self.dbc.readsk())
             self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            if(data == "Not a valid login?"):
+            msg = self.fc.decryptit(data)
+            self.handleReturn(msg.decode())
+            strmsg = msg.decode()
+            if(strmsg == "Not a valid login?"):
                 print(data)
                 return None
             elif (data == "Already logged in byeeee"):

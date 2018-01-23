@@ -98,7 +98,10 @@ class Session:
         #go into permission matrix and set booleans
 
     def sEncrypt(self,data):
+        print("dude22")
+        print(self.loggedin)
         if self.loggedin:
+            print("dude")
             path = "./data/serverkeys/" + self.username + ".txt"
             pubk = self.loadSKey(path)
             sig,msg = self.ac.encryptit(data,pubk)
