@@ -123,14 +123,11 @@ class Server:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
                         ret = ("logged in successfully")
-                        return(ret)
                     else:
                         ret = ("Already logged in byeeee")
-                        return(ret)
                 else:
-                    print("hjkljkljkl")
                     ret = ("Not a valid login?")
-                    return(ret)
+                return(ret)
             else:
                 print("Timed out") #print statement to show middle man cannot access user's account
                 ret = "Timed Out"
@@ -162,6 +159,7 @@ class Server:
                     error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
+                        #session.assignUser(ca)
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")
@@ -194,17 +192,6 @@ class Server:
                                     pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
                                     ret = pubreq.encode()
                                     return(ret)
-                            else:
-                                ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                                error7 = self.db.write("permissionMatrix", str(ca))
-                                ret = self.e.send_err(error7) #again change string print out?
-                                if error7==0:
-                                    s_pubkey, error11 = self.db.readk() #the server reads its own public key and sends it to the user.
-                                    ret = self.e.read_err(error11)
-                                    if error11 ==0:
-                                        pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
-                                        ret = pubreq.encode()
-                                        return(ret)
             return(ret)
 
         elif(data[0:4] == "CMSG"):
@@ -249,10 +236,10 @@ class Server:
                         print("message sent")
                     else:
                         ret = "Session Validation error?"
-                        return (ret)
+                        return ret
                 else:
                     ret = "Timed out"
-                    return (ret)
+                    return ret
             else:
                 ret = sobj.getRecipient() + " is not a valid account?"
 
@@ -326,7 +313,6 @@ class Server:
                         if data:
                             data = s.sDecrypt(sig,data)
                             ret_data = self.handleReq(data.decode(), s)
-                            print(ret_data)
                             sig,ret_data = s.sEncrypt(ret_data)
 
                             if sig == None: #used to send over server's key.
@@ -342,5 +328,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    s = Server(ADDRESS_OF_CLIENT,5005,1024)
+    s = Server("127.0.0.1",5005,1024)
     s.run()

@@ -24,9 +24,17 @@ class Client:
         self.fc = FernetCrypt()
         self.dbc = DatabaseC()
         self.e = errHandle()
-        self.c_keys = GenKeys()
         self.username =""
         #self.asym = asymetricSuite(keypair)
+
+        keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
+        if keyExist:
+            self.ih.getkey()
+            self.c_keys = self.ih.getkey()
+            if self.c_keys == None:
+                self.c_keys = GenKeys()
+        else:
+            self.c_keys = GenKeys()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -158,7 +166,6 @@ class Client:
             keypair = self.dbc.readk(username)
             asym = asymetricSuite(keypair)
             sig,enc_req = asym.encryptit(req,self.dbc.readsk())
-            print(sig)
             self.sendAll(str(sig[0]).encode(),enc_req[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
@@ -237,19 +244,21 @@ class Client:
             sig, enc_lreq = asym.encryptit(lreq, self.dbc.readsk())
             self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            msg = self.fc.decryptit(data)
-            self.handleReturn(msg.decode())
-            strmsg = msg.decode()
+            msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
+            if(ver):
+                self.handleReturn(msg.decode())
+            else:
+                return req
+            strmsg  = msg.decode()
             if(strmsg == "Not a valid login?"):
                 print(data)
                 return None
-            elif (data == "Already logged in byeeee"):
+            elif (strmsg == "Already logged in byeeee"):
                 print(data)
                 self.getSocket().close()
                 sys.exit(1)
             else:
                 return user
-
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
         # answers={}

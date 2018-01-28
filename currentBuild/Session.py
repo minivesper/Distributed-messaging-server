@@ -67,11 +67,12 @@ class Session:
         else:
             return False
 
-    #def assignUser(self, CACMreq):
-    #    error19, username = self.db.returnUser(CACMreq.getUsername())
-    #    ret = self.e.send_err(error19)
-    #    if error19 ==0:
-    #        self.username = username
+    def assignUser(self, CACMreq):
+        error19, username = self.db.returnUser(CACMreq.getUsername())
+        ret = self.e.send_err(error19)
+        if error19 ==0:
+            print("got here session bitch")
+            self.username = username
 
     def datecheck(self,reqtime):
             dt = datetime.strptime(reqtime, "%Y-%m-%d %H:%M:%S.%f")
@@ -97,7 +98,6 @@ class Session:
         #go into permission matrix and set booleans
 
     def sEncrypt(self,data):
-        print(self.loggedin)
         if self.loggedin:
             path = "./data/serverkeys/" + self.username + ".txt"
             pubk = self.loadSKey(path)
