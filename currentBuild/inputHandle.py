@@ -23,6 +23,36 @@ class inputHandle:
         msgtxt = input("what send: ")
         return sendTo,msgtxt
 
+    def YorN(self,inp):
+        print(inp)
+        user = input("Input Y/N: ")
+        while(user not in( "Y", "y", "N", "n")):
+            user = input("Input Y/N: ")
+        if user == "Y" or user == "y":
+            return True
+        else:
+            return False
+
+    def getkey(self):
+        user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n ")
+        while(user != "N" or not self.checkKey(user)):
+            user= input("file error, try path input again or type N to cancel ")
+        if user == "N":
+            return None
+        key = loadkey(user)
+        return key
+
+    def checkKey(self, pathname):
+        try:
+            f = open(path, r)
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+        try:
+           keypair = RSA.importKey(f.read())
+           return keypair
+        except (IOError, OSError) as e:
+          print("key is not valid %s"%(e))
+
     def credHandle(self):
         user = input("Username: ")
         pwd = getpass.getpass("Password for " + user + ": ")

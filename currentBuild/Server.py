@@ -328,5 +328,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    s = Server(ADDRESS_OF_CLIENT,5005,1024)
+    s = Server("127.0.0.1",5005,1024)
     s.run()
