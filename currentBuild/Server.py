@@ -162,7 +162,6 @@ class Server:
                     error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
-                        #session.assignUser(ca)
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")

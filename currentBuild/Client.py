@@ -161,7 +161,6 @@ class Client:
             print(sig)
             self.sendAll(str(sig[0]).encode(),enc_req[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            print("sig",sig)
             msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
             if(ver):
                 self.handleReturn(msg.decode())
