@@ -58,7 +58,7 @@ class Server:
         return self.socket
 
     def sendAll(self,sig,reqstr,connection,buffsize):
-        req = reqstr.encode('utf-8')
+        req = reqstr
         if not sig:
             connection.send((1).to_bytes(4,'little'))
             connection.send((len(req)).to_bytes(4,'little'))
@@ -87,7 +87,7 @@ class Server:
                     data.extend(singlerec)
                 else:
                     return "timeout"
-            return None,data.decode()
+            return None,bytes(data)
 
         elif packettype == 0:
             ret = []
@@ -106,14 +106,16 @@ class Server:
                         data.extend(singlerec)
                     else:
                         return "timeout"
-                ret.append(data)
-            print(ret)
-            return (ret[1].decode(),''),ret[0].decode()
+                ret.append(bytes(data))
+            if (len(ret[0]) > 0):
+                return (int(ret[1].decode()),),(ret[0],)
+            else:
+                return None,None
 
     def handleReq(self, data, session):
-        ret = "nothing to see here"
+        ret = "Please enter a valid command"
         if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None)
+            lg = LOGN(None,None)
             lg.decode(data)
             if(session.datecheck(lg.getTime())):
                 if(session.loginAttempt(lg)):
@@ -154,12 +156,10 @@ class Server:
                 error2 = self.db.write("logindata", login)
                 ret = self.e.send_err(error2) #right now if 0, ret will be "message sent successfully". Not just "wrote user"
                 if error2 == 0:
-                    print(ca.getpubkey())
-                    #a = ca.getpubkey().encode()
-                    #keye = a.exportkey('PEM')
-                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey()) #screws up because no longer RSA object after sending over wire
+                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
+                        #session.assignUser(ca)
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")
@@ -177,7 +177,7 @@ class Server:
                                             s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
                                             ret = self.e.read_err(error9)
                                             if error9 ==0:
-                                                pubreq = PUBK(user, s_pubkey) #figure out which error handler
+                                                pubreq = PUBK(self.username, s_pubkey) #figure out which error handler
                                                 ret = pubreq.encode()
                                                 return(ret)
                                 return(ret)
@@ -276,7 +276,7 @@ class Server:
             keypair = RSA.importKey(f.read())
             return keypair
         else:
-            ncry = GenKeys(1024)
+            ncry = GenKeys()
             print("generated new keypair")
             keypair = ncry.my_keypair.exportKey('PEM')
             self.db.writek('serverkeys/server', keypair)
@@ -299,7 +299,6 @@ class Server:
                 s = Session(conn)
                 sessions.append(s)
                 connected_clients.append(s.conn)
-                #swap public keys
                 print('Connection address:', addr)
 
             clients_allowed = []
@@ -315,9 +314,13 @@ class Server:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             data = s.sDecrypt(sig,data)
-                            ret_data = self.handleReq(data, s)
+                            ret_data = self.handleReq(data.decode(), s)
                             sig,ret_data = s.sEncrypt(ret_data)
-                            self.sendAll(sig,ret_data,s.conn,self.getBUFFER_SIZE())
+
+                            if sig == None: #used to send over server's key.
+                                self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())
+                            else:
+                                self.sendAll(str(sig[0]).encode(),ret_data[0],s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
                             if s.getUsername() in self.active_users:
@@ -327,5 +330,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    s = Server(ADDRESS_OF_CLIENT,5005,1024)
+    s = Server("127.0.0.1",5005,1024)
     s.run()

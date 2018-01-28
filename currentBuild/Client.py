@@ -24,9 +24,17 @@ class Client:
         self.fc = FernetCrypt()
         self.dbc = DatabaseC()
         self.e = errHandle()
-        self.c_keys = GenKeys()
-        self.asym = asymetricSuite(self.c_keys.my_pubkey)
+        self.username =""
         #self.asym = asymetricSuite(keypair)
+
+        keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
+        if keyExist:
+            self.ih.getkey()
+            self.c_keys = self.ih.getkey()
+            if self.c_keys == None:
+                self.c_keys = GenKeys()
+        else:
+            self.c_keys = GenKeys()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,24 +62,8 @@ class Client:
     def getSocket(self):
         return self.socket
 
-    def handleReturn(self, returnreq):
-        if(returnreq[0:4] == "RMSG"):
-            rm = RMSG(None,None)
-            rm.decode(returnreq)
-            self.cachedMessages = rm.messages
-            print(rm)
-        elif(returnreq[0:4] == "PUBK"):
-            print("here")
-            print("req", returnreq)
-            pk = PUBK(None,None)
-            pk.decode(returnreq)
-            self.dbc.writesk(pk.getpubkey())
-            return
-        else:
-            print(returnreq)
-
     def sendAll(self,sig,reqstr,buffsize):
-        req = reqstr.encode('utf-8')
+        req = reqstr
         if not sig:
             self.getSocket().sendto((1).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
             self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
@@ -101,7 +93,8 @@ class Client:
                     data.extend(singlerec)
                 else:
                     return "timeout"
-            return None,data.decode()
+            return None,bytes(data)
+
         elif packettype == 0:
             ret = []
             for i in range(2):
@@ -119,11 +112,25 @@ class Client:
                         data.extend(singlerec)
                     else:
                         return "timeout"
-                ret.append(data)
-            return (ret[1].decode(),''),ret[0].decode()
+                ret.append(bytes(data))
+            return (int(ret[1].decode()),),(ret[0],)
+
+    def handleReturn(self, returnreq):
+        if returnreq[0:4] == "PUBK" :
+            pk = PUBK(None,None)
+            pk.decode(returnreq)
+            self.dbc.writesk(pk.getpubkey())
+            return
+        elif returnreq[0:4] == "RMSG":
+            rm = RMSG(None,None)
+            rm.decode(returnreq)
+            print(rm)
+            self.cachedMessages = rm.messages
+        else:
+            print(returnreq)
 
     def handleCommand(self, inp_str, username):
-        req = ""
+        req = "Not a valid Server-- attacker present"
         if(inp_str == "SMSG"):
             sendTo,msgtxt = self.ih.sendHandle()
             req = SMSG(username, sendTo, msgtxt)
@@ -190,11 +197,6 @@ class Client:
         inp = input("LOGN or CACM? ").upper()
         if inp == "LOGN":
             user = self.inputCredentials()
-            # if(os.stat("data/clientkeys/" + user + ".txt").st_size != 0):
-            #      f = open("data/clientkeys/" + user + ".txt")
-            #      keypairr = RSA.importKey(f.read())
-            #      #keypairr = self.db.readk('serverkeys/server')
-            #      ccry = asymmetricSuite(keypairr)
             return user
         elif inp == "CACM":
             user, pwd, permission = self.ih.getCredentials()
@@ -221,20 +223,20 @@ class Client:
         pwd = self.fc.hashpwd(userb, pwdb)
 
         u_keypair = GenKeys()
-        u_keypairs = u_keypair.getpubkey().exportKey('PEM')
+        u_keypairs = u_keypair.getkeypair().exportKey('PEM')
         error = self.dbc.writek(user, u_keypairs)
         ret = self.e.send_err(error) #need to come back to this ??
         #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
 
         if error == 0:
-            lreq = CACM(user,str(pwd),permission, u_keypairs)
+            lreq = CACM(user,pwd.decode(),permission, u_keypair.getpubkey().exportKey('PEM'))
             lreq= lreq.encode()
-            #encode this messags with FernetCrypt--which I think will still be in the sendAll and recAll
-            self.sendAll(None, lreq,self.getBUFFER_SIZE())
+            lreq = self.fc.encryptit(lreq)
+            self.sendAll(None,lreq,self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            self.handleReturn(data)
+            msg = self.fc.decryptit(data)
+            self.handleReturn(msg.decode())
             if(data == "username already exists, please enter a new username"):
-                print(data)
                 user = self.createUser()
                 return None
             if permission == "2":
@@ -248,18 +250,19 @@ class Client:
 
     def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
+        self.username = user
         keypair = self.dbc.readk(user)
-        if keypair == 2:
+        if not keypair:
             print("username does not exist")
             return None
         else:
             asym = asymetricSuite(keypair) #inits the asymmetric suite so we can use encryption
+            u_pubkey = keypair.publickey().exportKey('PEM')
             pwd = self.fc.hashpwd(userb,pwdb) #creates the hash of the password
-            lreq = LOGN(user,str(pwd))
+            lreq = LOGN(user,pwd.decode())
             lreq = lreq.encode() #changes string to bytes
-            sig, enc_lreq = asym.encryptit(lreq, asym.getpubkey())
-
-            self.sendAll(sig, enc_lreq,self.getBUFFER_SIZE()) #not going to work because sendAll needs take in two parameters
+            sig, enc_lreq = asym.encryptit(lreq, self.dbc.readsk())
+            self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             if(data == "Not a valid login?"):
                 print(data)
@@ -269,9 +272,7 @@ class Client:
                 self.getSocket().close()
                 sys.exit(1)
             else:
-                print(data)
                 return user
-
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
         # answers={}

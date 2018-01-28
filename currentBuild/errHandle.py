@@ -4,7 +4,7 @@ class errHandle:
 
     def delete_err(self,code):
         if code == 0:
-            return "Message sent successfully?"
+            return "Message deleted successfully?"
         elif code == 1:
             return "Error in deleting message?"
         elif code == 2:
