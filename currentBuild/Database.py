@@ -136,6 +136,31 @@ class Database:
             return(2)
         return(0)
 
+    def deleteUser(self, fname, fname2, username):
+        try:
+            f = open("./data/copyperm.txt", 'w')
+            with open(fname) as infile:
+                for line in infile:
+                    lparts = line.split(",")
+                    if username not in lparts:
+                        f.write(line)
+                dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+
+        try:
+            f = open("./data/copylogin.txt", 'w')
+            with open(fname2) as infile:
+                for line in infile:
+                    lparts = line.split(",")
+                    if username not in lparts:
+                        f.write(line)
+                dest = shutil.move("./data/copylogin.txt", "./data/logindata.txt")
+        except (IOError, OSError) as e:
+            print("could not open file %s"%(e))
+            return(2)
+        return(0)
+
     def writek(self,recipient, writeText):
         try:
             fname = "./data/serverkeys/" + recipient + ".txt"

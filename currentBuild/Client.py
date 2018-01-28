@@ -157,6 +157,11 @@ class Client:
             req = UPDT(username, updts[0], updts[1], updts[2])
             req = req.encode()
 
+        elif(inp_str == "DUSR"):
+            updts = self.ih.deleteHandle()
+            req = DUSR(username, updts)
+            req = req.encode()
+
         elif(inp_str == "QUIT"):
             self.getSocket().close()
             sys.exit(1)
@@ -251,10 +256,8 @@ class Client:
                 return req
             strmsg  = msg.decode()
             if(strmsg == "Not a valid login?"):
-                print(data)
                 return None
             elif (strmsg == "Already logged in byeeee"):
-                print(data)
                 self.getSocket().close()
                 sys.exit(1)
             else:

@@ -21,6 +21,7 @@ class Session:
         self.UPDTp = False
         self.CACMp = True
         self.DMSGp = False
+        self.DUSRp = False
 
         keypair = self.loadSKey("./data/serverkeys/server.txt")
         self.ac = asymetricSuite(keypair)
@@ -59,8 +60,9 @@ class Session:
 
     def loginAttempt(self, LOGNreq):
         ver, err = self.db.verify("./data/logindata.txt", LOGNreq.getUsername(), LOGNreq.getPass())
+        self.username = LOGNreq.getUsername()
         if ver:
-            self.username = LOGNreq.getUsername()
+            #self.username = LOGNreq.getUsername()
             self.loggedin = True
             self.setper(self.username)
             return True
@@ -95,6 +97,7 @@ class Session:
                 self.UPDTp = lparts[5]
                 self.CACMp = lparts[6]
                 self.DMSGp = lparts[7]
+                self.DUSRp = lparts[8]
         #go into permission matrix and set booleans
 
     def sEncrypt(self,data):
@@ -103,7 +106,7 @@ class Session:
             pubk = self.loadSKey(path)
             sig,msg = self.ac.encryptit(data,pubk)
             return sig,msg
-        elif self.username: #this is only for the CACM part so that the server can send back his public key--unclear if this safe??
+        elif self.username: #This is for the not a valid login request to be completed by asymmetric
             path = "./data/serverkeys/" + self.username + ".txt"
             pubk = self.loadSKey(path)
             sig,msg = self.ac.encryptit(data,pubk)
@@ -113,7 +116,7 @@ class Session:
             return None,data
 
     def sDecrypt(self,sig,data):
-        if not sig:
+        if not sig: #for the CACM request
             data = self.fc.decryptit(data)
             return data
 
@@ -144,6 +147,8 @@ class Session:
         if(self.DMSGp == "1" and data.type == "DMSG" and data.username == self.username):
             return True
         if(self.UPDTp == "1" and data.type == "UPDT" and data.username == self.username):
+            return True
+        if(self.DUSRp == "1" and data.type == "DUSR" and data.username == self.username):
             return True
         else:
             return False

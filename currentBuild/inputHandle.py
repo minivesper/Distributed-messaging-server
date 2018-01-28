@@ -76,6 +76,10 @@ class inputHandle:
         x = [userupdt, permname, permbool]
         return x
 
+    def deleteHandle(self):
+        userupdt = input("which user do you want to delete? ")
+        return userupdt
+
     def getCredentials(self):
         print("please enter a username with only letters and numbers")
         user = input("Username: ")

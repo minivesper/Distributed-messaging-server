@@ -123,11 +123,13 @@ class Server:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
                         ret = ("logged in successfully")
+                        return ret
                     else:
                         ret = ("Already logged in byeeee")
+                        return ret
                 else:
                     ret = ("Not a valid login?")
-                return(ret)
+                    return(ret)
             else:
                 print("Timed out") #print statement to show middle man cannot access user's account
                 ret = "Timed Out"
@@ -165,7 +167,7 @@ class Server:
                             error3 = self.db.getAdmin("./data/logindata.txt")
                             ret = self.e.admin_err(error3)
                             if error3:
-                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
                                 error4 = self.db.write("permissionMatrix", str(wperm))
                                 ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
                                 if error4 == 0:
@@ -182,7 +184,7 @@ class Server:
                                                 return(ret)
                                 return(ret)
                         else:
-                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
                             error7 = self.db.write("permissionMatrix", str(ca))
                             ret = self.e.send_err(error7) #again change string print out?
                             if error7==0:
@@ -256,6 +258,21 @@ class Server:
                     return ret
             else:
                 ret = uobj.getouser() + "is not a valid account?"
+                return(ret)
+
+        elif data[0:4]=="DUSR":
+            dobj = DUSR(None, None)
+            dobj.decode(data)
+            if(self.db.checkexistance("./data/permissionMatrix.txt", dobj.getDeleteuser())):
+                if(session.check(dobj)):
+                    error = self.db.deleteUser("./data/permissionMatrix.txt", "./data/logindata.txt", dobj.getDeleteuser())
+                    ret = self.e.update_err(error)
+                    return ret
+                else:
+                    ret = "Session Validation Error?"
+                    return ret
+            else:
+                ret = dobj.getDeleteuser() + "is not a valid account?"
         return(ret)
 
     # def sendKey(self):
