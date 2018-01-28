@@ -24,9 +24,17 @@ class Client:
         self.fc = FernetCrypt()
         self.dbc = DatabaseC()
         self.e = errHandle()
-        self.c_keys = GenKeys()
         self.username =""
         #self.asym = asymetricSuite(keypair)
+
+        keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
+        if keyExist:
+            self.ih.getkey()
+            self.c_keys = self.ih.getkey()
+            if self.c_keys == None:
+                self.c_keys = GenKeys()
+        else:
+            self.c_keys = GenKeys()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -245,7 +253,6 @@ class Client:
                 sys.exit(1)
             else:
                 return user
-
     #inquirer code we are not using for the time being
     # def chooseMessage(self, user):
         # answers={}
