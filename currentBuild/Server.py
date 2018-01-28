@@ -107,10 +107,13 @@ class Server:
                     else:
                         return "timeout"
                 ret.append(bytes(data))
-            return (int(ret[1].decode()),),(ret[0],)
+            if (len(ret[0]) > 0):
+                return (int(ret[1].decode()),),(ret[0],)
+            else:
+                return None,None
 
     def handleReq(self, data, session):
-        ret = "nothing to see here"
+        ret = "Please enter a valid command"
         if(data[0:4] == "LOGN"):
             lg = LOGN(None,None)
             lg.decode(data)
@@ -174,7 +177,7 @@ class Server:
                                             s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
                                             ret = self.e.read_err(error9)
                                             if error9 ==0:
-                                                pubreq = PUBK(user, s_pubkey) #figure out which error handler
+                                                pubreq = PUBK(self.username, s_pubkey) #figure out which error handler
                                                 ret = pubreq.encode()
                                                 return(ret)
                                 return(ret)
