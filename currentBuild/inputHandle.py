@@ -35,16 +35,18 @@ class inputHandle:
 
     def getkey(self):
         user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n ")
-        while(user != "N" or not self.checkKey(user)):
+
+        while(user != "N"):
+            if(self.checkKey(user)):
+                key = loadkey(user)
+                return key
             user= input("file error, try path input again or type N to cancel ")
         if user == "N":
             return None
-        key = loadkey(user)
-        return key
 
     def checkKey(self, pathname):
         try:
-            f = open(path, r)
+            f = open(pathname, "r")
         except (IOError, OSError) as e:
            print("could not open file %s"%(e))
         try:

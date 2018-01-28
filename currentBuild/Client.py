@@ -244,10 +244,16 @@ class Client:
             sig, enc_lreq = asym.encryptit(lreq, self.dbc.readsk())
             self.sendAll(str(sig[0]).encode(),enc_lreq[0],self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
-            if(data == "Not a valid login?"):
+            msg,ver = asym.decryptit(data,sig,self.dbc.readsk())
+            if(ver):
+                self.handleReturn(msg.decode())
+            else:
+                return req
+            strmsg  = msg.decode()
+            if(strmsg == "Not a valid login?"):
                 print(data)
                 return None
-            elif (data == "Already logged in byeeee"):
+            elif (strmsg == "Already logged in byeeee"):
                 print(data)
                 self.getSocket().close()
                 sys.exit(1)
