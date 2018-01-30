@@ -1,4 +1,4 @@
-SMSG request format:
+ SMSG request format:
 SMSG|<int length of sender>|<string sender>|<int length of recipient>|<string recipient>|<int length of msgtxt>|<string msgtxt>
 
 LOGN request format:
