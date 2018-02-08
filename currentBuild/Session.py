@@ -14,6 +14,7 @@ class Session:
         self.e = errHandle()
         self.loggedin = False
         self.username = None
+        self.fern = False
         self.LOGNp = True
         self.SMSGp = False
         self.CMSGp = False
@@ -69,12 +70,15 @@ class Session:
         else:
             return False
 
-    def assignUser(self, CACMreq):
-        error19, username = self.db.returnUser(CACMreq.getUsername())
-        ret = self.e.send_err(error19)
-        if error19 ==0:
-            print("got here session bitch")
-            self.username = username
+    def fernetCrypt(self):
+        self.fern = True
+
+    # def assignUser(self, CACMreq):
+    #     error19, username = self.db.returnUser(CACMreq.getUsername())
+    #     ret = self.e.send_err(error19)
+    #     if error19 ==0:
+    #         print("got here session bitch")
+    #         self.username = username
 
     def datecheck(self,reqtime):
             dt = datetime.strptime(reqtime, "%Y-%m-%d %H:%M:%S.%f")
@@ -114,6 +118,14 @@ class Session:
         else:
             data = self.fc.encryptit(data)
             return None,data
+        # if self.fern:
+        #     data = self.fc.encryptit(data)
+        #     return None,data
+        # else:
+        #     path = "./data/serverkeys/" + self.username + ".txt"
+        #     pubk = self.loadSKey(path)
+        #     sig,msg = self.ac.encryptit(data,pubk)
+        #     return sig,msg
 
     def sDecrypt(self,sig,data):
         if not sig: #for the CACM request

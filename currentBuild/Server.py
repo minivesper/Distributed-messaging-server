@@ -161,7 +161,7 @@ class Server:
                     error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
-                        #session.assignUser(ca)
+                        self.db.createMessageText(str(ca.getUsername()))
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")
@@ -282,10 +282,6 @@ class Server:
     #         pubreq = PUBK(s_pubkey) #figure out which error handler
     #         ret = pubreq.encode()
     #     return ret
-
-    def saveKey(self, paths):
-        #after recieving a public key save it in "data/serverkeys/username.txt"
-        return
 
     def loadKey(self, paths):
         if(os.path.exists(paths) and os.stat(paths).st_size != 0):

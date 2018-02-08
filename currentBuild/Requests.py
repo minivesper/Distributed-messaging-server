@@ -180,6 +180,8 @@ class UPDT(Request):
             ret = "6"
         elif Tag == "DMSG":
             ret = "7"
+        elif Tag == "DUSR":
+            ret = "8"
         return (ret)
 
     def encode(self):

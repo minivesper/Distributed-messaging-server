@@ -1,8 +1,4 @@
-user, LOGN, RMSG, CMSG, UPDT, CACM, or DMSG
-grant,1,1,1,1,1,1,1,1
-d,1,1,1,1,0,0,1,1
+user, LOGN, SMSG, RMSG, CMSG, UPDT, CACM, DMSG, DUSR
+d,1,1,1,1,1,1,1,1
+jk,1,1,1,1,0,0,1,0
 b,1,1,1,1,0,0,1,0
-y,1,1,1,1,0,0,1,0
-b,1,1,1,1,0,0,1,0
-c,1,1,1,1,0,0,1,0
-aa,1,1,1,1,0,0,1,0

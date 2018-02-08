@@ -137,6 +137,12 @@ class Database:
         return(0)
 
     def deleteUser(self, fname, fname2, username):
+        fnamemessage = "./data/" + username + ".txt"
+        os.remove(fnamemessage)
+        fnameserver = "./data/serverkeys/" + username + ".txt"
+        os.remove(fnameserver)
+        fnameclient = "./data/clientkeys/" + username + ".txt"
+        os.remove(fnameclient)
         try:
             f = open("./data/copyperm.txt", 'w')
             with open(fname) as infile:
@@ -177,6 +183,12 @@ class Database:
             print("could not open file %s"%(e))
             return(2)
         return(0)
+
+    def createMessageText(self, user):
+        filename = "./data/" + user + ".txt"
+        f = open(filename, 'a')
+        f.close()
+
 
     def write(self,recipient, writeText):
         try:

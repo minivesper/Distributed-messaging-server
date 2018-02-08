@@ -66,8 +66,8 @@ class inputHandle:
     def updateHandle(self):
         userupdt = input("which user do you want to update? ")
         permname = input("what permission do you want to change? ")
-        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG")):
-            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM, or DMSG")
+        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG", "DUSR")):
+            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM,DMSG, DUSR")
             permname = input("what permission do you want to change? ")
         permbool = input("Input change: ")
         while (permbool not in("0","1")):
