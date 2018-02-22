@@ -258,7 +258,10 @@ class Server:
                     return ret
             else:
                 ret = uobj.getouser() + "is not a valid account?"
+<<<<<<< HEAD
                 return(ret)
+=======
+>>>>>>> b7860fda76e7401822b0e70d0d42ab570ad41637
 
         elif data[0:4]=="DUSR":
             dobj = DUSR(None, None)
@@ -272,7 +275,11 @@ class Server:
                     ret = "Session Validation Error?"
                     return ret
             else:
+<<<<<<< HEAD
                 ret = dobj.getDeleteuser() + "is not a valid account?"
+=======
+                ret = dobj.getDeleteuser() + " is not a valid account?"
+>>>>>>> b7860fda76e7401822b0e70d0d42ab570ad41637
         return(ret)
 
     # def sendKey(self):

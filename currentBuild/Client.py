@@ -29,9 +29,8 @@ class Client:
 
         keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
         if keyExist:
-            self.ih.getkey()
             self.c_keys = self.ih.getkey()
-            if self.c_keys == None:
+            if not self.c_keys:
                 self.c_keys = GenKeys()
         else:
             self.c_keys = GenKeys()
@@ -139,6 +138,11 @@ class Client:
 
         elif(inp_str == "CMSG"):
             req = CMSG(username)
+            req = req.encode()
+
+        elif(inp_str == "DUSR"):
+            updts = self.ih.deleteUserHandle()
+            req = DUSR(username, updts)
             req = req.encode()
 
         elif(inp_str == "DMSG"):

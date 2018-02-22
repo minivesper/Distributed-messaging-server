@@ -53,8 +53,7 @@ class Client:
             return user
 
     def run(self, currentUsername):
-            req = CMSG("logindata")
-            req = req.encode()
+            req = "CMSG||||||||"
             print(req)
             self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
             data = self.getSocket().recv(self.getBUFFER_SIZE())
