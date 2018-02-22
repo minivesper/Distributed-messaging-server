@@ -1,6 +1,7 @@
 import re
 import getpass
-
+import os
+from Crypt import *
 class inputHandle:
     def __init__(self):
         return
@@ -34,24 +35,26 @@ class inputHandle:
             return False
 
     def getkey(self):
-        user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n ")
+        user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n")
 
         while(user != "N"):
-            if(self.checkKey(user)):
-                key = loadkey(user)
-                return key
-            user= input("file error, try path input again or type N to cancel ")
+            if(os.path.exists(user)):
+                key = self.checkKey(user)
+                if key[0] == True:
+                    return key[1]
+                user= input("file error, file might not be formatted correctly?\n")
+            user = input("could not open file. Try again: \n")
         if user == "N":
             return None
 
     def checkKey(self, pathname):
         try:
-            f = open(pathname, "r")
+            f = open(pathname)
         except (IOError, OSError) as e:
            print("could not open file %s"%(e))
         try:
            keypair = RSA.importKey(f.read())
-           return keypair
+           return True, keypair
         except (IOError, OSError) as e:
           print("key is not valid %s"%(e))
 
@@ -62,6 +65,10 @@ class inputHandle:
         pwdb = pwd.encode('utf-8')
         return user,pwd,userb,pwdb
 
+
+    def deleteUserHandle(self):
+        userupdt = input("which user do you want to delete? ")
+        return userupdt
 
     def updateHandle(self):
         userupdt = input("which user do you want to update? ")

@@ -256,6 +256,20 @@ class Server:
                     return ret
             else:
                 ret = uobj.getouser() + "is not a valid account?"
+
+        elif data[0:4]=="DUSR":
+            dobj = DUSR(None, None)
+            dobj.decode(data)
+            if(self.db.checkexistance("./data/permissionMatrix.txt", dobj.getDeleteuser())):
+                if(session.check(dobj)):
+                    error = self.db.deleteUser("./data/permissionMatrix.txt", "./data/logindata.txt", dobj.getDeleteuser())
+                    ret = self.e.update_err(error)
+                    return ret
+                else:
+                    ret = "Session Validation Error?"
+                    return ret
+            else:
+                ret = dobj.getDeleteuser() + " is not a valid account?"
         return(ret)
 
     # def sendKey(self):

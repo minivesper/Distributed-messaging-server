@@ -241,6 +241,37 @@ class Database:
            return None, 2
         return messages, 0
 
+    def deleteUser(self, fname, fname2, username):
+            fnamemessage = "./data/" + username + ".txt"
+            os.remove(fnamemessage)
+            fnameserver = "./data/serverkeys/" + username + ".txt"
+            os.remove(fnameserver)
+            fnameclient = "./data/clientkeys/" + username + ".txt"
+            os.remove(fnameclient)
+            try:
+                f = open("./data/copyperm.txt", 'w')
+                with open(fname) as infile:
+                    for line in infile:
+                        lparts = line.split(",")
+                        if username not in lparts:
+                            f.write(line)
+                    dest = shutil.move("./data/copyperm.txt", "./data/permissionMatrix.txt")
+            except (IOError, OSError) as e:
+                print("could not open file %s"%(e))
+
+            try:
+                f = open("./data/copylogin.txt", 'w')
+                with open(fname2) as infile:
+                    for line in infile:
+                        lparts = line.split(",")
+                        if username not in lparts:
+                            f.write(line)
+                    dest = shutil.move("./data/copylogin.txt", "./data/logindata.txt")
+            except (IOError, OSError) as e:
+                print("could not open file %s"%(e))
+                return(2)
+            return(0)
+
     def readk(self):
         user = "server"
         fname = "./data/serverkeys/server.txt"

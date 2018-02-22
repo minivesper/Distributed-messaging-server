@@ -135,6 +135,7 @@ class Session:
                 return None
 
     def check(self, data):
+        ##STOP ALL BAR REQUESTS
         if not self.loggedin:
             return False
         if(self.SMSGp == "1" and data.type == "SMSG" and data.username == self.username):
