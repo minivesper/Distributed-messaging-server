@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 user, LOGN, SMSG, RMSG, CMSG, UPDT, CACM, DMSG, DUSR
 grant,1,1,1,1,1,1,1,1
 abbie,1,1,1,1,1,0,1,0
@@ -6,3 +7,10 @@ natalie,1,1,1,1,0,0,1,0
 vic,1,1,1,1,0,0,1,0
 e,1,1,1,1,0,0,1,0
 p,1,1,1,1,0,0,1,0
+=======
+user,LOGNp,CMSGp,RMSGp,SMSGp,UPERp,CACMp,DMSGp
+grant,1,1,1,1,1,1,1
+a,1,1,1,1,0,0,1
+b,1,1,1,1,0,0,1
+c,1,1,1,1,1,0,1
+>>>>>>> 0e57363e09741c496ac07bba55a498be48d2602c

@@ -44,6 +44,7 @@ class Client:
             print("Error creating socket: %s" %msg)
             sys.exit(1)
         try:
+            print(self.TCP_IP, self.TCP_PORT)
             s.connect((self.TCP_IP, self.TCP_PORT))
             print("Socket connection valid")
         except socket.error as msg:
