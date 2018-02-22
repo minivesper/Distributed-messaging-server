@@ -148,6 +148,7 @@ class Client:
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):
+                    print(self.cachedMessages)
                     message_num =self.ih.deleteHandle(self.cachedMessages)
                     req = DMSG(self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][2])
                     req = req.encode()
