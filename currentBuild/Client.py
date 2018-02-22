@@ -44,6 +44,7 @@ class Client:
             print("Error creating socket: %s" %msg)
             sys.exit(1)
         try:
+            print(self.TCP_IP, self.TCP_PORT)
             s.connect((self.TCP_IP, self.TCP_PORT))
             print("Socket connection valid")
         except socket.error as msg:
@@ -148,6 +149,7 @@ class Client:
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):
+                    print(self.cachedMessages)
                     message_num =self.ih.deleteHandle(self.cachedMessages)
                     req = DMSG(self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][2])
                     req = req.encode()
