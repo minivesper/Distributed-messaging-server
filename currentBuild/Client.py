@@ -149,7 +149,6 @@ class Client:
                 self.handleCommand("DMSG",username)
             else:
                 if(len(self.cachedMessages) != 0):
-                    print(self.cachedMessages)
                     message_num =self.ih.deleteHandle(self.cachedMessages)
                     req = DMSG(self.cachedMessages[message_num-1][1],self.cachedMessages[message_num-1][0],self.cachedMessages[message_num-1][2])
                     req = req.encode()
@@ -160,7 +159,7 @@ class Client:
             req = req.encode()
 
         elif(inp_str == "DUSR"):
-            updts = self.ih.deleteHandle()
+            updts = self.ih.deleteUserHandle()
             req = DUSR(username, updts)
             req = req.encode()
 

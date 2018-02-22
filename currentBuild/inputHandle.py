@@ -76,7 +76,7 @@ class inputHandle:
         x = [userupdt, permname, permbool]
         return x
 
-    def deleteHandle(self):
+    def deleteUserHandle(self):
         userupdt = input("which user do you want to delete? ")
         return userupdt
 
