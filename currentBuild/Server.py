@@ -111,6 +111,9 @@ class Server:
                 return (int(ret[1].decode()),),(ret[0],)
             else:
                 return None,None
+        else:
+            print("bad request disconnecting", connection.getsockname())
+            return None,None
 
     def handleReq(self, data, session):
         ret = "Please enter a valid command"

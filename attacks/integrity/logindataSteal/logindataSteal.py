@@ -52,10 +52,23 @@ class Client:
             print(data.decode())
             return user
 
+    def sendAll(self,sig,reqstr,buffsize):
+        req = reqstr
+        if not sig:
+            self.getSocket().sendto((1).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
+            self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+        else:
+            self.getSocket().sendto((0).to_bytes(4,'little'),(self.getTCP_IP(),self.getTCP_PORT()))
+            self.getSocket().sendto((len(req)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(req,(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto((len(sig)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.getSocket().sendto(sig,(self.getTCP_IP(), self.getTCP_PORT()))
+
     def run(self, currentUsername):
-            req = "CMSG||||||||"
+            req = "1asndflkdsfjkj"
             print(req)
-            self.getSocket().sendto(req.encode('utf-8'),(self.getTCP_IP(), self.getTCP_PORT()))
+            self.sendAll(None,req,1024)
             data = self.getSocket().recv(self.getBUFFER_SIZE())
             print(data)
 
