@@ -1,6 +1,0 @@
-Vulnerable tag: middlemanstealdata
-
-This attack collects the request the user sends over to the server and then saves the information in a file. The middleman then uses this
-file to reply to the server in order to login as the client. It also can check messages but will only get back the bytes, not the plain text.
-
-In order to fix this attack, I need to implement a time stamp in order to make it so that the middleman cannot 
