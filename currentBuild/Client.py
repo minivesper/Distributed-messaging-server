@@ -25,15 +25,8 @@ class Client:
         self.dbc = DatabaseC()
         self.e = errHandle()
         self.username =""
+        self.c_keys = None
         #self.asym = asymetricSuite(keypair)
-
-        keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
-        if keyExist:
-            self.c_keys = self.ih.getkey()
-            if not self.c_keys:
-                self.c_keys = GenKeys()
-        else:
-            self.c_keys = GenKeys()
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,6 +68,34 @@ class Client:
             self.getSocket().sendto((len(sig)).to_bytes(4,'little'),(self.getTCP_IP(), self.getTCP_PORT()))
             self.getSocket().sendto(sig,(self.getTCP_IP(), self.getTCP_PORT()))
 
+    def keyExist(self):
+        keyE = self.ih.YorN("Do you have a keypair acessible from this location? ")
+        if keyE:
+            self.c_keys = self.ih.getkey()
+            return True
+            if not self.c_keys: #what is this for???
+                print("you do not have a valid key, please check again or create a new account")
+                #self.c_keys = GenKeys().my_keypair We don't want to generate keys until a user creates an account
+        else:
+            return False
+
+    def run(self, currentUsername):
+        while True:
+            inp = input("enter Command: ").upper()
+            self.handleCommand(inp, currentUsername)
+
+
+    def login(self):
+        #generate keypairs for encryption and swap public keys
+        user = None
+        user = self.inputCredentials()
+        return user
+
+    def createUser(self):
+        user = None
+        user, pwd, permission = self.ih.getCredentials()
+        user = self.checkCredentials(user, pwd, permission)
+        return user
 
     def recieveAll(self,buffsize):
         retdata = ""
@@ -187,46 +208,28 @@ class Client:
             print("%s is not a valid request type"%(inp_str))
 
 
-    def run(self, currentUsername):
-        while True:
-            inp = input("enter Command: ").upper()
-            self.handleCommand(inp, currentUsername)
-
-    def createUser(self):
-        #generate keypairs for encryption and swap public keys
-        user = None
-        inp = input("LOGN or CACM? ").upper()
-        if inp == "LOGN":
-            user = self.inputCredentials()
-            return user
-        elif inp == "CACM":
-            user, pwd, permission = self.ih.getCredentials()
-            user = self.checkCredentials(user, pwd, permission)
-            return user
-        else:
-            print("LOGN or CACM dummy! not %s"%(inp))
-            return user
-
     def checkCredentials(self, user, pwd, permission):
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = self.fc.hashpwd(userb, pwdb)
 
-        u_keypair = GenKeys()
-        u_keypairs = u_keypair.getkeypair().exportKey('PEM')
+        self.c_keys = GenKeys()
+        u_keypairs = self.c_keys.getkeypair().exportKey('PEM')
         error = self.dbc.writek(user, u_keypairs)
         ret = self.e.send_err(error) #need to come back to this ??
         #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
 
         if error == 0:
-            lreq = CACM(user,pwd.decode(),permission, u_keypair.getpubkey().exportKey('PEM'))
+            lreq = CACM(user,pwd.decode(),permission, self.c_keys.getpubkey().exportKey('PEM'))
             lreq= lreq.encode()
             lreq = self.fc.encryptit(lreq)
             self.sendAll(None,lreq,self.getBUFFER_SIZE())
             sig, data = self.recieveAll(self.getBUFFER_SIZE())
             msg = self.fc.decryptit(data)
+            decodemsg = msg.decode()
             self.handleReturn(msg.decode())
-            if(data == "username already exists, please enter a new username"):
+            if(decodemsg == "username already exists?"):
+                print("here")
                 user = self.createUser()
                 return None
             if permission == "2":
@@ -235,13 +238,14 @@ class Client:
                 return user
             else:
                 print("account created, please login")
-                user = self.createUser()
+                user = self.login()
                 return user
 
     def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
         self.username = user
-        keypair = self.dbc.readk(user)
+        #keypair = self.dbc.readk(user)
+        keypair = self.c_keys.my_keypair
         if not keypair:
             print("username does not exist")
             return None
@@ -267,32 +271,15 @@ class Client:
                 sys.exit(1)
             else:
                 return user
-    #inquirer code we are not using for the time being
-    # def chooseMessage(self, user):
-        # answers={}
-        # while answers != 'Quit':
-        #     questions = [inquirer.List('type',message="What do you want to do?",
-        #             choices=['Check Messages', 'Send Message', 'Quit'],),]
-        #     answers = inquirer.prompt(questions)
-        #     if answers["type"] == 'Send Message':
-        #         who = input("who do you send to ")
-        #         what = input("what you send ")
-        #         sm = SMSG(user,who,what)
-        #         self.handleCommand(str(sm))
-        #     if answers["type"]=='Check Messages':
-        #         cm =CMSG(user)
-        #         #need to create function that deals with if user is going to request all messages from all recipients at once? & how the server will handle it
-        #     if answers["type"]=='Quit':
-        #         #s = getSocket()
-        #         s.close()
-        #     #pprint(response)
-            #response = get_answer(answers)
-            #self.handleCommand(response)
 
 if __name__ == "__main__":
     c = Client(ADDRESS_OF_SERVER,5005,1024)
     user = None
-    while not user:
-        user = c.createUser()
+    if c.keyExist():
+        while not user:
+            user = c.login()
+    else:
+        while not user:
+            user=c.createUser()
     c.run(user)
                 # c.chooseMessage(user)

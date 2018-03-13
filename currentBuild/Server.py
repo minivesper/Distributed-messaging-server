@@ -197,6 +197,7 @@ class Server:
                                     pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
                                     ret = pubreq.encode()
                                     return(ret)
+            print(ret)
             return(ret)
 
         elif(data[0:4] == "CMSG"):
@@ -328,8 +329,11 @@ class Server:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             data = s.sDecrypt(sig,data)
-                            ret_data = self.handleReq(data.decode(), s)
-                            sig,ret_data = s.sEncrypt(ret_data)
+                            if data:
+                                ret_data = self.handleReq(data.decode(), s)
+                                sig,ret_data = s.sEncrypt(ret_data)
+                            else:
+                                ret_data = self.handleReq("asdf", s).encode('utf-8')
 
                             if sig == None: #used to send over server's key.
                                 self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())

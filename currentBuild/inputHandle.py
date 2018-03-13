@@ -25,7 +25,6 @@ class inputHandle:
         return sendTo,msgtxt
 
     def YorN(self,inp):
-        print(inp)
         user = input("Input Y/N: ")
         while(user not in( "Y", "y", "N", "n")):
             user = input("Input Y/N: ")
@@ -36,7 +35,6 @@ class inputHandle:
 
     def getkey(self):
         user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n")
-
         while(user != "N"):
             if(os.path.exists(user)):
                 key = self.checkKey(user)
@@ -88,7 +86,7 @@ class inputHandle:
         return userupdt
 
     def getCredentials(self):
-        print("please enter a username with only letters and numbers")
+        print("Create a new account! Please enter a username with only letters and numbers")
         user = input("Username: ")
         # while (re.search("[a-z|0-9]", user)) is None:
         #     print("please enter a username with only letters and numbers")

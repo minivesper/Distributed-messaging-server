@@ -1,3 +1,0 @@
-d,d,d
-grant,d,ddd
-dude,d,requesting permissions 2

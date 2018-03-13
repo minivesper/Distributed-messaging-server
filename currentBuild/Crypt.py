@@ -23,8 +23,7 @@ class GenKeys:#Randomly Generateing Asymetric Keys
 
     def __init__(self):
         self.my_keypair = self.keygen()
-        self.my_pubkey = self.my_keypair.publickey()
-
+        self.my_pubkey = self.getkeypair().publickey()
 
     def keygen(self):
         random_gen = Random.new().read
