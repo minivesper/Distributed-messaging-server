@@ -15,7 +15,7 @@ from Crypto.Hash import MD5
 from datetime import datetime, timedelta
 import time
 
-ADDRESS_OF_CLIENT = '127.0.0.1'
+ADDRESS_OF_SERVER = '127.0.0.1'
 
 class Server:
 
@@ -345,5 +345,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    s = Server("127.0.0.1",5005,1024)
+    s = Server(ADDRESS_OF_SERVER,5005,1024)
     s.run()

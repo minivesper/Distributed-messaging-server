@@ -234,7 +234,7 @@ class Client:
                 user = self.createUser()
                 return user
 
-    def inputCredentials(self): 
+    def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
         self.username = user
         keypair = self.dbc.readk(user)
