@@ -1,0 +1,16 @@
+Vulnerable tag: simpleDDOs_vulnerable
+patched tag: simpleDDOS_patched
+This attack causes a denial of service to for any requests from the server
+The malicious agent must send a 4 byte number to the server and nothing after it.
+This happens because the server is waiting to receive a message the size of that four byte number. If no message is sent after the number,
+then the server waits indefinitely.
+To expose this attack I wrote a malicious client that doesn't even login, but simply connects and sends a number to the server.
+
+To replicate: start server, run /attack/availability/simpleDDOS/DDOS.py
+
+To solve this vulnerability, a timeout structure will be implemented so a request recieving no data is cut after a certain
+amount of time.
+
+POST-PATCH: the server times out a receive if it does not receive any data for four secondss.
+
+Media link - (optional) Is there some news worthy compromise that used a vulnerability similar to this?

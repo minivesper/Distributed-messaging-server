@@ -1,12 +1,21 @@
 import socket
 import sys
+import fileinput
+import os
 import select
 from Session import *
 from Requests import *
 from Database import *
+from Crypt import *
 from errHandle import *
+import Crypto
+from Crypto.PublicKey import RSA
+from Crypto import Random
+from Crypto.Hash import MD5
+from datetime import datetime, timedelta
+import time
 
-ADDRESS_OF_CLIENT = '127.0.0.1'
+ADDRESS_OF_SERVER = '127.0.0.1'
 
 class Server:
 
@@ -16,6 +25,8 @@ class Server:
         self.BUFFER_SIZE = BUFFER_SIZE
         self.db = Database()
         self.e = errHandle()
+        self.active_users = []
+        self.username = "server"
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,150 +57,194 @@ class Server:
     def getSocket(self):
         return self.socket
 
-    def handleReq(self, data, session):
-        data = data.decode()
-        ret = "nothing to see here"
+    def sendAll(self,sig,reqstr,connection,buffsize):
+        req = reqstr
+        if not sig:
+            connection.send((1).to_bytes(4,'little'))
+            connection.send((len(req)).to_bytes(4,'little'))
+            connection.send(req)
+        else:
+            connection.send((0).to_bytes(4,'little'))
+            connection.send((len(req)).to_bytes(4,'little'))
+            connection.send(req)
+            connection.send((len(sig)).to_bytes(4,'little'))
+            connection.send(sig)
 
-        if(data[0:4] == "LOGN"):
-            lg = LOGN(None, None)
-            lg.decode(data)
-            if(session.loginAttempt(lg)):
-                ret = ("logged in successfully")
+    def recieveAll(self,connection,buffsize):
+        retdata = ""
+        data = bytearray()
+        packettype = int.from_bytes(connection.recv(4), 'little')
+        if packettype == 1:
+            packetsize = int.from_bytes(connection.recv(4),'little')
+            while packetsize > 0:
+                read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+                if connection in read_sockets:
+                    if(packetsize > 1024):
+                        singlerec = connection.recv(self.getBUFFER_SIZE())
+                    else:
+                        singlerec = connection.recv(packetsize)
+                        packetsize -= sys.getsizeof(singlerec)
+                    data.extend(singlerec)
+                else:
+                    return "timeout"
+            return None,bytes(data)
+
+        elif packettype == 0:
+            ret = []
+            for i in range(2):
+                retdata = ""
+                data = bytearray()
+                packetsize = int.from_bytes(connection.recv(4),'little')
+                while packetsize > 0:
+                    read_sockets, write_sockets, error_sockets = select.select([connection], [], [], 4)
+                    if connection in read_sockets:
+                        if(packetsize > 1024):
+                            singlerec = connection.recv(self.getBUFFER_SIZE())
+                        else:
+                            singlerec = connection.recv(packetsize)
+                            packetsize -= sys.getsizeof(singlerec)
+                        data.extend(singlerec)
+                    else:
+                        return "timeout"
+                ret.append(bytes(data))
+            if (len(ret[0]) > 0):
+                return (int(ret[1].decode()),),(ret[0],)
             else:
-                ret = ("Not a valid login")
-            return(ret)
+                return None,None
+        else:
+            print("bad request disconnecting", connection.getsockname())
+            return None,None
+
+    def handleReq(self, data, session):
+        ret = "Please enter a valid command"
+        if(data[0:4] == "LOGN"):
+            lg = LOGN(None,None)
+            lg.decode(data)
+            if(session.datecheck(lg.getTime())):
+                if(session.loginAttempt(lg)):
+                    if lg.getUsername() not in self.active_users:
+                        self.active_users.append(lg.getUsername())
+                        print("Logged in successfully") #print statements to show if middleman succeeds
+                        ret = ("logged in successfully")
+                    else:
+                        ret = ("Already logged in byeeee")
+                else:
+                    ret = ("Not a valid login?")
+                return(ret)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
+                return ret
+
+        elif data[0:4] == "PUBK":
+            pk = PUBK(None, None)
+            pk.decode(data)
+            self.db.write(pk) #saves user's public key
+            server_pkey = self.db.readserver() #reads server key
+            pks = PUBK(None, None) #create new PUBK request object to send back to the client
+
+            #decode that part of data with its public key
+            #send whatever server got back to client to verify the signature
+
+        elif data[0:4] == "TMOT":
+            ret = "you timed out ya fool"
 
         elif data[0:4] == "CACM":
-            ca = CACM(None, None, None)
+            ca = CACM(None, None, None, None)
             ca.decode(data)
+            login = str(ca.getUsername())+ ","+ str(ca.getPass()) + ","+ str(ca.getPermis())
             error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
             ret = self.e.duplicate_err(error)
             if error == 0:
-                error2 = self.db.write("logindata", str(ca))
+                error2 = self.db.write("logindata", login)
                 ret = self.e.send_err(error2) #right now if 0, ret will be "message sent successfully". Not just "wrote user"
                 if error2 == 0:
-                    if ca.getPermis() == "2":
-                        print("the user has permissions #2")
-                        error3 = self.db.getAdmin("./data/logindata.txt")
-                        ret = self.e.admin_err(error3)
-                        print(error3)
-                        if error3:
-
-                            wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                            error4 = self.db.write("permissionMatrix", str(wperm))
-                            ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
-                            if error4 == 0:
-                                for a in error3: #error3 should be a list of all admins
-                                    data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
-                                    error5 = self.db.write(a, data)
-                                    ret = self.e.send_err(error5) #again might want to new function to print differnt string about admin (like sent message to admin instead of successfully sent)
-                                return (ret)
-                            return(ret)
-                    else:
-                        ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-                        error7 = self.db.write("permissionMatrix", str(ca))
-                        ret = self.e.send_err(error7) #again change string print out?
-                        return (ret)
-                return (ret)
+                    error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
+                    ret = self.e.send_err(error8)
+                    if error8 == 0:
+                        #session.assignUser(ca)
+                        if ca.getPermis() == "2":
+                            print("the user has permissions #2")
+                            error3 = self.db.getAdmin("./data/logindata.txt")
+                            ret = self.e.admin_err(error3)
+                            if error3:
+                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
+                                error4 = self.db.write("permissionMatrix", str(wperm))
+                                ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
+                                if error4 == 0:
+                                    for a in error3: #error3 should be a list of all admins
+                                        data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
+                                        error5 = self.db.write(a, data)
+                                        ret = self.e.send_err(error5) #again might want to new function to print differnt string about admin (like sent message to admin instead of successfully sent)
+                                        if error5 ==0:
+                                            s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
+                                            ret = self.e.read_err(error9)
+                                            if error9 ==0:
+                                                pubreq = PUBK(self.username, s_pubkey) #figure out which error handler
+                                                ret = pubreq.encode()
+                                                return(ret)
+                                return(ret)
+                        else:
+                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
+                            error7 = self.db.write("permissionMatrix", str(ca))
+                            ret = self.e.send_err(error7) #again change string print out?
+                            if error7==0:
+                                s_pubkey, error11 = self.db.readk() #the server reads its own public key and sends it to the user.
+                                ret = self.e.read_err(error11)
+                                if error11 ==0:
+                                    pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
+                                    ret = pubreq.encode()
+                                    return(ret)
             return(ret)
 
-
-        # ca = CACM(None, None, None)
-        # ca.decode(data)
-        # error = self.db.checkDuplicate("./data/logindata.txt", ca.getUsername())
-        # if error == 0:
-        #     ret =("Account created successfully")
-        #     error2 = self.db.write("logindata", str(ca))
-        #     if error2 == 0:
-        #         if ca.getPermis() == "2":
-        #             admin = self.db.getAdmin("./data/logindata.txt")
-        #             if admin == 1:
-        #                 ret = "could not read file to get admin"
-        #             if admin ==2:
-        #                 ret = "could not open file"
-        #             else:
-        #                 caf = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-        #                 perror = self.db.write("permissionMatrix", str(caf))
-        #                 if perror == 1:
-        #                     ret = "can't write to permissions"
-        #                 elif perror == 2:
-        #                     ret = "could not open permissions file"
-        #                 elif perror == 3:
-        #                     ret = "permission file full"
-        #                 elif perror == 0:
-        #                     for a in admin:
-        #                         data = ca.getUsername() + "," + a +"," + "requesting permissions %s"%ca.getPermis()
-        #                         error = self.db.write(a, data)
-        #                         if error == 0:
-        #                             ret = "Message sent to admin"
-        #                         elif error == 1:
-        #                             ret = "Error in sending message to admin"
-        #                         elif error == 2:
-        #                             ret = "File does not exist"
-        #                         elif error == 3:
-        #                             ret = "Admin's userbox is full"
-        #                     return (ret)
-        #                 return(ret)
-        #         else:
-        #             ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
-        #             error3 = self.db.write("permissionMatrix", str(ca))
-        #             if error3 == 0:
-        #                 ret = ("Account created successfully created")
-        #             elif error3 == 1:
-        #                 ret = "Error in writing permissions message"
-        #             elif error3 == 2:
-        #                 ret = "File does not exist"
-        #             elif error3 == 3:
-        #                 ret = ("permission matrix is full")
-        #             return (ret)
-        #     elif error2 == 1:
-        #         ret = "Error in sending message to admin"
-        #     elif error2 == 2:
-        #         ret = "File does not exist"
-        #     elif error2 == 3:
-        #         ret = "Admin's userbox is full"
-        #     return (ret)
-        # elif error == 1:
-        #     ret = ("Error in sending message")
-        # elif error == 2:
-        #     ret = "File does not exist"
-        # elif error == 3:
-        #     ret = ("username already exists, please enter a new username")
-        #     print("ret",ret)
-        # return(ret)
         elif(data[0:4] == "CMSG"):
             cm = CMSG(None)
+            if data[6] == None:
+                ret = "No messages"
             cm.decode(data)
-            if(session.check(cm)):
-                messages = []
-                messages, error = self.db.read(str(cm.getUsername()))
-                ret = self.e.read_err(error)
-                if(error == 0):
-                    rm = RMSG(None, None)
-                    ret = rm.encode(messages)
+            if(session.datecheck(cm.getTime())):
+                if(session.check(cm)):
+                    messages = []
+                    messages, error = self.db.read(str(cm.getUsername()))
+                    ret = self.e.read_err(error)
+                    if(error == 0):
+                        rm = RMSG(None, None)
+                        ret = rm.encode(messages)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="DMSG":
             dobj = DMSG(None, None, None)
             dobj.decode(data)
-            if(session.check(dobj)):
-                error = self.db.delete(dobj.getUsername(), str(dobj))
-                ret = self.e.delete_err(error)
+            if(session.datecheck(dobj.getTime())):
+                if(session.check(dobj)):
+                    error = self.db.delete(dobj.getUsername(), str(dobj))
+                    ret = self.e.delete_err(error)
+            else:
+                print("Timed out") #print statement to show middle man cannot access user's account
+                ret = "Timed Out"
             return(ret)
 
         elif data[0:4]=="SMSG":
             sobj = SMSG(None, None, None)
             sobj.decode(data)
             if(self.db.checkexistance("./data/permissionMatrix.txt", sobj.getRecipient())):
-                if(session.check(sobj)):
-                    error = self.db.write(sobj.getRecipient(), str(sobj))
-                    ret = self.e.send_err(error)
-                    return(ret)
+                if(session.datecheck(sobj.getTime())):
+                    if(session.check(sobj)):
+                        error = self.db.write(sobj.getRecipient(), str(sobj))
+                        ret = self.e.send_err(error)
+                        return(ret)
+                        print("message sent")
+                    else:
+                        ret = "Session Validation error?"
+                        return ret
                 else:
-                    ret = "Session Validation error"
+                    ret = "Timed out"
                     return ret
             else:
-                ret = sobj.getRecipient() + " is not a valid account"
+                ret = sobj.getRecipient() + " is not a valid account?"
 
         elif data[0:4]=="UPDT":
             uobj = UPDT(None, None, None, None)
@@ -200,18 +255,58 @@ class Server:
                     ret = self.e.update_err(error)
                     return ret
                 else:
-                    ret = "Session Validation Error"
+                    ret = "Session Validation Error?"
                     return ret
             else:
-                ret = uobj.getouser() + "is not a valid account"
+                ret = uobj.getouser() + "is not a valid account?"
+
+        elif data[0:4]=="DUSR":
+            dobj = DUSR(None, None)
+            dobj.decode(data)
+            if(self.db.checkexistance("./data/permissionMatrix.txt", dobj.getDeleteuser())):
+                if(session.check(dobj)):
+                    error = self.db.deleteUser("./data/permissionMatrix.txt", "./data/logindata.txt", dobj.getDeleteuser())
+                    ret = self.e.update_err(error)
+                    return ret
+                else:
+                    ret = "Session Validation Error?"
+                    return ret
+            else:
+                ret = dobj.getDeleteuser() + " is not a valid account?"
         return(ret)
 
+    # def sendKey(self):
+    #     s_pubkey, error9 = self.db.readk() #the server reads its own public key and sends it to the user.
+    #     ret = self.e.read_err(error9)
+    #     if error9 ==0:
+    #         pubreq = PUBK(s_pubkey) #figure out which error handler
+    #         ret = pubreq.encode()
+    #     return ret
+
+    def saveKey(self, paths):
+        #after recieving a public key save it in "data/serverkeys/username.txt"
+        return
+
+    def loadKey(self, paths):
+        if(os.path.exists(paths) and os.stat(paths).st_size != 0):
+            f = open(paths)
+            keypair = RSA.importKey(f.read())
+            return keypair
+        else:
+            ncry = GenKeys()
+            print("generated new keypair")
+            keypair = ncry.my_keypair.exportKey('PEM')
+            self.db.writek('server', keypair.decode())
+            return keypair
+
     def run(self):
+        self.loadKey("./data/serverkeys/server.txt")
         print("listening...")
         connected_clients = []
         sessions = []
-        while True:
 
+        counter = 0
+        while True:
             attempts_to_connect, wlist, xlist = select.select([self.getSocket()],[], [], 0.05)
 
             for connections in attempts_to_connect:
@@ -219,7 +314,6 @@ class Server:
                 s = Session(conn)
                 sessions.append(s)
                 connected_clients.append(s.conn)
-
                 print('Connection address:', addr)
 
             clients_allowed = []
@@ -232,14 +326,24 @@ class Server:
 
                 for s in sessions:
                     if s.conn in clients_allowed:
-                        data = s.conn.recv(self.getBUFFER_SIZE())
+                        sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
-                            ret_data = self.handleReq(data, s)
-                            s.conn.send(ret_data.encode())
+                            data = s.sDecrypt(sig,data)
+                            ret_data = self.handleReq(data.decode(), s)
+                            sig,ret_data = s.sEncrypt(ret_data)
+
+                            if sig == None: #used to send over server's key.
+                                self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())
+                            else:
+                                self.sendAll(str(sig[0]).encode(),ret_data[0],s.conn,self.getBUFFER_SIZE())
                         else:
                             print(s.conn.getsockname(), "disconnected")
+                            if s.getUsername() in self.active_users:
+                                self.active_users.remove(s.getUsername())
                             connected_clients.remove(s.conn)
+                            sessions.remove(s)
+
 
 if __name__ == "__main__":
-    s = Server(ADDRESS_OF_CLIENT,5005,1024)
+    s = Server(ADDRESS_OF_SERVER,5005,1024)
     s.run()

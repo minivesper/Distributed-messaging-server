@@ -1,6 +1,7 @@
 import re
 import getpass
-
+import os
+from Crypt import *
 class inputHandle:
     def __init__(self):
         return
@@ -23,11 +24,55 @@ class inputHandle:
         msgtxt = input("what send: ")
         return sendTo,msgtxt
 
+    def YorN(self,inp):
+        user = input("Input Y/N: ")
+        while(user not in( "Y", "y", "N", "n")):
+            user = input("Input Y/N: ")
+        if user == "Y" or user == "y":
+            return True
+        else:
+            return False
+
+    def getkey(self):
+        user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n")
+        while(user != "N"):
+            if(os.path.exists(user)):
+                key = self.checkKey(user)
+                if key[0] == True:
+                    return key[1]
+                user= input("file error, file might not be formatted correctly?\n")
+            user = input("could not open file. Try again: \n")
+        if user == "N":
+            return None
+
+    def checkKey(self, pathname):
+        try:
+            f = open(pathname)
+        except (IOError, OSError) as e:
+           print("could not open file %s"%(e))
+        try:
+           keypair = RSA.importKey(f.read())
+           return True, keypair
+        except (IOError, OSError) as e:
+          print("key is not valid %s"%(e))
+
+    def credHandle(self):
+        user = input("Username: ")
+        pwd = getpass.getpass("Password for " + user + ": ")
+        userb = user.encode('utf-8')
+        pwdb = pwd.encode('utf-8')
+        return user,pwd,userb,pwdb
+
+
+    def deleteUserHandle(self):
+        userupdt = input("which user do you want to delete? ")
+        return userupdt
+
     def updateHandle(self):
         userupdt = input("which user do you want to update? ")
         permname = input("what permission do you want to change? ")
-        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG")):
-            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM, or DMSG")
+        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG", "DUSR")):
+            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM,DMSG, DUSR")
             permname = input("what permission do you want to change? ")
         permbool = input("Input change: ")
         while (permbool not in("0","1")):
@@ -36,35 +81,39 @@ class inputHandle:
         x = [userupdt, permname, permbool]
         return x
 
+    def deleteUserHandle(self):
+        userupdt = input("which user do you want to delete? ")
+        return userupdt
+
     def getCredentials(self):
-        print("please enter a username with only letters and numbers")
+        print("Create a new account! Please enter a username with only letters and numbers")
         user = input("Username: ")
-        while (re.search("[a-z|0-9]", user)) is None:
-            print("please enter a username with only letters and numbers")
-            user = input("Username: ")
-            while (len(user))>15:
-                print("please enter a username with 15 characters")
-                user = input("Username: ")
+        # while (re.search("[a-z|0-9]", user)) is None:
+        #     print("please enter a username with only letters and numbers")
+        #     user = input("Username: ")
+        #     while (len(user))>15:
+        #         print("please enter a username with 15 characters")
+        #         user = input("Username: ")
         print("Please create a password")
         pwd = getpass.getpass("Password for " + user + ":")
-        while(len(pwd))<8:
-            print("Password needs to be a minimum of 8 characters")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(len(pwd))>15:
-            print("Password needs to be a max of 15 characters")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[a-z]", pwd)) is None:
-            print("Password needs to contain 1 lowercase value")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[A-Z]", pwd)) is None:
-            print("Password needs to contain 1 uppercase value")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[0-9]", pwd)) is None:
-            print("Password needs to contain 1 number")
-            pwd = getpass.getpass("Password for " + user + ":")
-        while(re.search("[!@#$%^&*]", pwd)) is None:
-            print("Password needs to contain a special character (!@#$%^&*)")
-            pwd = getpass.getpass("Password for " + user + ":")
+        # while(len(pwd))<8:
+        #     print("Password needs to be a minimum of 8 characters")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(len(pwd))>15:
+        #     print("Password needs to be a max of 15 characters")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[a-z]", pwd)) is None:
+        #     print("Password needs to contain 1 lowercase value")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[A-Z]", pwd)) is None:
+        #     print("Password needs to contain 1 uppercase value")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[0-9]", pwd)) is None:
+        #     print("Password needs to contain 1 number")
+        #     pwd = getpass.getpass("Password for " + user + ":")
+        # while(re.search("[!@#$%^&*]", pwd)) is None:
+        #     print("Password needs to contain a special character (!@#$%^&*)")
+        #     pwd = getpass.getpass("Password for " + user + ":")
         permission = input("Permission code: ")
         while permission != "1" and permission != "2":
             print("Permission code needs to be 1 for member or 2 for admin access")

@@ -1,0 +1,7 @@
+usr: pi, pass: raspberry
+dhcpd to start dhcpd
+named -c /etc/bind/named.conf to start named server
+*need to debug named server
+turn off firewall
+client should connect to mail.rasp
+turn off wifi

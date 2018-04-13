@@ -1,18 +1,5 @@
-joe,pwd,3
-gm,g|?\m  ,2
-ele,v,1
-CACM,yogi,M8*uJ\\u\\\\U\\*
-the,Mo*8\\u\\\\Y\|&,1?
-joey,Mm*8\\\\j\|u7&,1?
-y,Mo8*\\\\U\|\|u,1?
-q,Mn&7*\\\\\,u*
-Hhhh,Ni*9\|\|7\|\\,1?
-yes,Mo&7\\\\7\|y,1?
-billy,lk\|\|l\\\\k*,1?
-hg,m9*\\\\&\\\,
-None,None,None
-None,None,None
-None,None,None
-gueys,m\\l||p\poi\0,1?
-None,None,None
-asdlkj3,absC2!ljk,1?
+grant,qTsKBkUJHJwABs1tGxeZEm2JhtAzTJofVDj2dOn8yKo=,3
+a,_FIrgNNCoYtHzIZB6OtQDeuh5eVZcI9VJh91QcsQyAU=,2
+b,9Mi2gFUP8r271i1sj-e3OIgarrx91fSqRFz8XVWGZWk=,2
+c,yG2wL0fbKRlA_pH2nBkh7cD6WBjNQ0zZ3VL9BWPT-to=,2
+g,MpsLz3pu5EWCcXTg39Qwsp_76-Rm2TP6BhAyMdKTGpI=,2
