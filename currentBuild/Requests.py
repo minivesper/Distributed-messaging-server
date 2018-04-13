@@ -180,6 +180,8 @@ class UPDT(Request):
             ret = "6"
         elif Tag == "DMSG":
             ret = "7"
+        elif Tag == "DUSR":
+            ret = "8"
         return (ret)
 
     def encode(self):
@@ -341,6 +343,53 @@ class SMSG(Request):
 
     def __repr__(self):
         return("%s,%s,%s"%(self.username,self.Recipient,self.Message))
+
+class DUSR(Request):
+    def __init__(self, Username, deleteuser):
+        Request.__init__(self,Username,"DUSR")
+        self.deleteuser = deleteuser
+
+    def getDeleteuser(self):
+        return self.deleteuser
+
+    def encode(self):
+        sendStr = "DUSR|"
+        sendStr +=  self.addchar(self.getUsername()) +"|" + self.addchar(self.getDeleteuser()) + "|"+ self.addchar(self.getTime()) + "?"
+        return sendStr
+
+    def decode(self, stream):
+        writes = 0
+        stream_item = ""
+        c = 5
+        while c  < len(stream):
+            if stream[c] == "\\" and stream[c+1] == ",":
+                stream_item += stream[c] + stream[c+1]
+                c = c+1
+            elif stream[c] == "\\":
+                stream_item += stream[c+1]
+                c=c+1
+            elif stream[c] == "|" or stream[c] == "?":
+                if writes == 0:
+                    self.username = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 1:
+                    self.deleteuser = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                elif writes == 2:
+                    self.time = stream_item
+                    stream_item = ""
+                    writes=writes+1
+                if stream[c] == "?":
+                    return
+            else:
+                stream_item += stream[c]
+            c=c+1
+
+
+    def __repr__(self):
+        return("%s,%s"%(self.username,self.deleteuser))
 
 class RMSG(Request):
 

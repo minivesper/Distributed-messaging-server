@@ -9,7 +9,7 @@ if __name__ == "__main__":
   f.write(sys.argv[1] + "," + password + "," + str(3) + "\n")
   f.close()
   f = open("../data/permissionMatrix.txt", "a")
-  f.write(sys.argv[1] + ",1,1,1,1,1,1,1\n")
+  f.write(sys.argv[1] + ",1,1,1,1,1,1,1,1\n")
   f.close()
 
   u_keypair = GenKeys()

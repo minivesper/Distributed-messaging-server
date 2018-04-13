@@ -168,7 +168,7 @@ class Server:
                             error3 = self.db.getAdmin("./data/logindata.txt")
                             ret = self.e.admin_err(error3)
                             if error3:
-                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                                wperm = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
                                 error4 = self.db.write("permissionMatrix", str(wperm))
                                 ret = self.e.send_err(error4) #again might want new function to send different message string about permissions
                                 if error4 == 0:
@@ -185,7 +185,7 @@ class Server:
                                                 return(ret)
                                 return(ret)
                         else:
-                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1"
+                            ca = str(ca.getUsername()) + ",1,1,1,1,0,0,1,0"
                             error7 = self.db.write("permissionMatrix", str(ca))
                             ret = self.e.send_err(error7) #again change string print out?
                             if error7==0:

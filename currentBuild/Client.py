@@ -25,11 +25,13 @@ class Client:
         self.dbc = DatabaseC()
         self.e = errHandle()
         self.username =""
+        self.keyLoaded = False
         #self.asym = asymetricSuite(keypair)
 
         keyExist = self.ih.YorN("Do you have a keypair acessible from this location? ")
         if keyExist:
             self.c_keys = self.ih.getkey()
+            self.keyLoaded = True
             if not self.c_keys:
                 self.c_keys = GenKeys()
         else:
@@ -188,28 +190,29 @@ class Client:
             inp = input("enter Command: ").upper()
             self.handleCommand(inp, currentUsername)
 
+    def login(self):
+        user = None
+        user = self.inputCredentials()
+        return user
+
     def createUser(self):
         #generate keypairs for encryption and swap public keys
-        user = None
-        inp = input("LOGN or CACM? ").upper()
-        if inp == "LOGN":
+        if self.keyLoaded:
             user = self.inputCredentials()
-            return user
-        elif inp == "CACM":
+        else:
+            user = None
             user, pwd, permission = self.ih.getCredentials()
             user = self.checkCredentials(user, pwd, permission)
-            return user
-        else:
-            print("LOGN or CACM dummy! not %s"%(inp))
-            return user
+        return user
 
     def checkCredentials(self, user, pwd, permission):
         userb = user.encode('utf-8')
         pwdb = pwd.encode('utf-8')
         pwd = self.fc.hashpwd(userb, pwdb)
 
-        u_keypair = GenKeys()
+        u_keypair = self.c_keys
         u_keypairs = u_keypair.getkeypair().exportKey('PEM')
+        self.c_keys = self.c_keys.getkeypair()
         error = self.dbc.writek(user, u_keypairs)
         ret = self.e.send_err(error) #need to come back to this ??
         #u_keypairs = u_keypair.getpubkey().exportKey('PEM')
@@ -223,21 +226,22 @@ class Client:
             msg = self.fc.decryptit(data)
             self.handleReturn(msg.decode())
             if(data == "username already exists, please enter a new username"):
-                user = self.createUser()
+                user = self.inputCredentials()
                 return None
             if permission == "2":
                 print("Your credentials have been sent to admin, checkback later for approval")
-                user = self.createUser()
+                user = self.login()
                 return user
             else:
                 print("account created, please login")
-                user = self.createUser()
+                user = self.login()
                 return user
 
     def inputCredentials(self):
         user, pwd, userb, pwdb = self.ih.credHandle()
         self.username = user
-        keypair = self.dbc.readk(user)
+        keypair = self.c_keys
+        print(keypair)
         if not keypair:
             print("username does not exist")
             return None

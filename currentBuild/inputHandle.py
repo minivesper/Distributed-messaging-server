@@ -25,7 +25,6 @@ class inputHandle:
         return sendTo,msgtxt
 
     def YorN(self,inp):
-        print(inp)
         user = input("Input Y/N: ")
         while(user not in( "Y", "y", "N", "n")):
             user = input("Input Y/N: ")
@@ -36,7 +35,6 @@ class inputHandle:
 
     def getkey(self):
         user = input("input file location from this directory ex: '../../documents/key/keypair.txt'\n")
-
         while(user != "N"):
             if(os.path.exists(user)):
                 key = self.checkKey(user)
@@ -73,8 +71,8 @@ class inputHandle:
     def updateHandle(self):
         userupdt = input("which user do you want to update? ")
         permname = input("what permission do you want to change? ")
-        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG")):
-            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM, or DMSG")
+        while (permname not in("LOGN", "SMSG", "RMSG", "CMSG", "UPDT", "CACM","DMSG", "DUSR")):
+            print("Need to input LOGN, RMSG, CMSG, UPDT, CACM,DMSG, DUSR")
             permname = input("what permission do you want to change? ")
         permbool = input("Input change: ")
         while (permbool not in("0","1")):
@@ -83,8 +81,12 @@ class inputHandle:
         x = [userupdt, permname, permbool]
         return x
 
+    def deleteUserHandle(self):
+        userupdt = input("which user do you want to delete? ")
+        return userupdt
+
     def getCredentials(self):
-        print("please enter a username with only letters and numbers")
+        print("Create a new account! Please enter a username with only letters and numbers")
         user = input("Username: ")
         # while (re.search("[a-z|0-9]", user)) is None:
         #     print("please enter a username with only letters and numbers")
