@@ -15,7 +15,7 @@ from Crypto.Hash import MD5
 from datetime import datetime, timedelta
 import time
 
-ADDRESS_OF_CLIENT = '127.0.0.1'
+ADDRESS_OF_SERVER = '127.0.0.1'
 
 class Server:
 
@@ -126,13 +126,11 @@ class Server:
                         self.active_users.append(lg.getUsername())
                         print("Logged in successfully") #print statements to show if middleman succeeds
                         ret = ("logged in successfully")
-                        return ret
                     else:
                         ret = ("Already logged in byeeee")
-                        return ret
                 else:
                     ret = ("Not a valid login?")
-                    return(ret)
+                return(ret)
             else:
                 print("Timed out") #print statement to show middle man cannot access user's account
                 ret = "Timed Out"
@@ -164,7 +162,7 @@ class Server:
                     error8 = self.db.writek(str(ca.getUsername()), ca.getpubkey())
                     ret = self.e.send_err(error8)
                     if error8 == 0:
-                        self.db.createMessageText(str(ca.getUsername()))
+                        #session.assignUser(ca)
                         if ca.getPermis() == "2":
                             print("the user has permissions #2")
                             error3 = self.db.getAdmin("./data/logindata.txt")
@@ -197,7 +195,6 @@ class Server:
                                     pubreq = PUBK(self.username,s_pubkey) #figure out which error handler
                                     ret = pubreq.encode()
                                     return(ret)
-            print(ret)
             return(ret)
 
         elif(data[0:4] == "CMSG"):
@@ -262,7 +259,6 @@ class Server:
                     return ret
             else:
                 ret = uobj.getouser() + "is not a valid account?"
-                return(ret)
 
         elif data[0:4]=="DUSR":
             dobj = DUSR(None, None)
@@ -276,7 +272,7 @@ class Server:
                     ret = "Session Validation Error?"
                     return ret
             else:
-                ret = dobj.getDeleteuser() + "is not a valid account?"
+                ret = dobj.getDeleteuser() + " is not a valid account?"
         return(ret)
 
     # def sendKey(self):
@@ -286,6 +282,10 @@ class Server:
     #         pubreq = PUBK(s_pubkey) #figure out which error handler
     #         ret = pubreq.encode()
     #     return ret
+
+    def saveKey(self, paths):
+        #after recieving a public key save it in "data/serverkeys/username.txt"
+        return
 
     def loadKey(self, paths):
         if(os.path.exists(paths) and os.stat(paths).st_size != 0):
@@ -329,11 +329,8 @@ class Server:
                         sig, data = self.recieveAll(s.conn,self.getBUFFER_SIZE())
                         if data:
                             data = s.sDecrypt(sig,data)
-                            if data:
-                                ret_data = self.handleReq(data.decode(), s)
-                                sig,ret_data = s.sEncrypt(ret_data)
-                            else:
-                                ret_data = self.handleReq("asdf", s).encode('utf-8')
+                            ret_data = self.handleReq(data.decode(), s)
+                            sig,ret_data = s.sEncrypt(ret_data)
 
                             if sig == None: #used to send over server's key.
                                 self.sendAll(None,ret_data,s.conn,self.getBUFFER_SIZE())
@@ -348,5 +345,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    s = Server("127.0.0.1",5005,1024)
+    s = Server(ADDRESS_OF_SERVER,5005,1024)
     s.run()
